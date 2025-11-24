@@ -25,4 +25,27 @@ dependencies {
     implementation(libs.ktor.server.config.yaml)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)
+
+    implementation("org.jetbrains.exposed:exposed-core:0.46.0")
+    implementation("org.jetbrains.exposed:exposed-jdbc:0.46.0")
+    implementation("org.jetbrains.exposed:exposed-java-time:0.46.0")
+    implementation("org.postgresql:postgresql:42.7.1")
+    implementation("com.zaxxer:HikariCP:5.1.0")
+
+    // 2. INYECCIÓN DE DEPENDENCIAS (Koin para Ktor)
+    implementation("io.insert-koin:koin-ktor:3.5.3")
+    implementation("io.insert-koin:koin-logger-slf4j:3.5.3")
+}
+
+tasks {
+    shadowJar {
+
+        archiveBaseName.set("tournify")
+        archiveClassifier.set("all")
+        archiveVersion.set("")
+
+        isZip64 = true
+
+        mergeServiceFiles()
+    }
 }
