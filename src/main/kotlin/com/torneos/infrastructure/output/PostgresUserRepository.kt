@@ -1,2 +1,1 @@
-package com.com.torneos.infrastructure.output
-
+package com.torneos.infrastructure.output

@@ -13,6 +13,12 @@ application {
     mainClass = "io.ktor.server.netty.EngineMain"
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
 dependencies {
     implementation(libs.ktor.server.auth)
     implementation(libs.ktor.server.core)
@@ -35,6 +41,13 @@ dependencies {
     // 2. INYECCIÓN DE DEPENDENCIAS (Koin para Ktor)
     implementation("io.insert-koin:koin-ktor:3.5.3")
     implementation("io.insert-koin:koin-logger-slf4j:3.5.3")
+
+    // --- AWS S3 (SDK de Kotlin) ---
+    implementation("aws.sdk.kotlin:s3:1.0.13")
+    implementation("aws.smithy.kotlin:aws-signing-default:1.0.13")
+
+    // --- Ktor Client (Requerido por AWS SDK para hacer peticiones HTTP) ---
+    implementation("io.ktor:ktor-client-cio:3.0.0")
 }
 
 tasks {
@@ -48,4 +61,8 @@ tasks {
 
         mergeServiceFiles()
     }
+}
+
+kotlin {
+    jvmToolchain(21)
 }

@@ -1,2 +1,4 @@
-package com.com.torneos.infrastructure.configuration
+package com.torneos.infrastructure.configuration
+
+
 

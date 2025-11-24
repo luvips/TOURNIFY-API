@@ -1,4 +1,4 @@
-package com.com.torneos.infrastructure.configuration
+package com.torneos.infrastructure.configuration
 
 import io.ktor.server.application.*
 import io.ktor.server.response.*

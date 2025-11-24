@@ -1,4 +1,4 @@
-package com.com.torneos.infrastructure.configuration
+package com.torneos.infrastructure.configuration
 
 import com.fasterxml.jackson.databind.*
 import io.ktor.serialization.jackson.*
