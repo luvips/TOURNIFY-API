@@ -10,8 +10,12 @@ data class User(
     val email: String,
     val passwordHash: String,
     val role: UserRole,
-    val avatarUrl: String?,
+    val firstName: String?,
+    val lastName: String?,
     val phone: String?,
+    val avatarUrl: String?,
+    val isActive: Boolean,
+    val emailVerified: Boolean,
     val createdAt: Instant = Instant.now(),
     val updatedAt: Instant = Instant.now()
 )

@@ -9,29 +9,56 @@ import java.util.UUID
 data class Tournament(
     val id: UUID = UUID.randomUUID(),
     val organizerId: UUID,
+    val sportId: UUID?, // Puede ser null si borras el deporte, aunque en SQL pusimos restrict
+    
+    // Info Básica
     val name: String,
     val description: String?,
-    val location: String?,
-    val imageUrl: String?,
-    val sport: String,
-    val sportSubtype: String?,
-    val category: String?,
+    val sport: String, // String redundante para UI rápida
+    val sportSubType: String?,
+
+    // Configuración
     val tournamentType: String,
-    val eliminationMode: EliminationMode,
+    val category: String?,
+    val eliminationMode: EliminationMode?,
+
+    // Fechas y Lugar
+    val location: String?,
     val startDate: Instant,
     val endDate: Instant?,
-    val status: TournamentStatus,
+    val registrationDeadline: Instant?,
+
+    // Capacidad y Costos
     val maxTeams: Int,
+    val currentTeams: Int,
     val registrationFee: BigDecimal,
     val prizePool: String?,
+
+    // Privacidad
     val isPrivate: Boolean,
-    val accessCode: String?,
     val requiresApproval: Boolean,
-    // JSONB: Los mantenemos como String por ahora para flexibilidad
-    val sportSettingsJson: String = "{}",
-    val scoringRulesJson: String = "{}",
-    val stageConfigJson: String = "{}",
+    val accessCode: String?,
+
+    // Grupos y Config JSON (Como String)
+    val hasGroupStage: Boolean,
+    val numberOfGroups: Int?,
+    val teamsPerGroup: Int?,
+    val teamsAdvancePerGroup: Int?,
+    
+    val sportSettingsJson: String = "{}", // JSONB
+    val groupConfigJson: String = "{}",   // JSONB
+
+    // Puntuación
+    val allowTies: Boolean,
+    val pointsForWin: Int,
+    val pointsForDraw: Int,
+    val pointsForLoss: Int,
+
+    // Media
     val rulesText: String?,
+    val imageUrl: String?,
+    
+    val status: TournamentStatus,
     val createdAt: Instant = Instant.now(),
     val updatedAt: Instant = Instant.now()
 )
