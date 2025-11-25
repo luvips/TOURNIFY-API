@@ -2,8 +2,9 @@ package com.torneos.infrastructure.adapters.output.persistence.tables
 
 import com.torneos.domain.enums.UserRole
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.javatime.CurrentTimestamp
 import org.jetbrains.exposed.sql.javatime.CurrentDateTime
-import org.jetbrains.exposed.sql.javatime.timestamp
+import org.jetbrains.exposed.sql.javatime.*
 
 object UsersTable : Table("users") {
     val id = uuid("id")
@@ -22,8 +23,8 @@ object UsersTable : Table("users") {
     val isActive = bool("is_active").default(true)
     val emailVerified = bool("email_verified").default(false)
     
-    val createdAt = timestamp("created_at").defaultExpression(CurrentDateTime)
-    val updatedAt = timestamp("updated_at").defaultExpression(CurrentDateTime)
+    val createdAt = timestamp("created_at").defaultExpression(CurrentTimestamp())
+    val updatedAt = timestamp("updated_at").defaultExpression(CurrentTimestamp())
 
     override val primaryKey = PrimaryKey(id)
 }
