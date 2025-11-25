@@ -13,6 +13,7 @@ fun Application.module() {
         modules(getAppModule(environment.config))
     }
 
+    //
     // 2. Configurar Plugins
     configureSerialization()
     configureSecurity()
