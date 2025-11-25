@@ -48,6 +48,8 @@ dependencies {
 
     // --- Ktor Client (Requerido por AWS SDK para hacer peticiones HTTP) ---
     implementation("io.ktor:ktor-client-cio:3.0.0")
+
+    implementation("org.mindrot:jbcrypt:0.4")
 }
 
 tasks {

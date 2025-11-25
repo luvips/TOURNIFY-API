@@ -1,32 +1,25 @@
 package com.torneos.infrastructure.configuration
 
+import com.torneos.infrastructure.adapters.output.persistence.DatabaseFactory
 import io.ktor.server.application.*
 import io.ktor.server.netty.*
-import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import kotlinx.serialization.json.Json
+import org.koin.ktor.plugin.Koin
 
-// 1. Entry Point
 fun main(args: Array<String>): Unit = EngineMain.main(args)
 
-// 2. Módulo Principal
 fun Application.module() {
-    // Configuración JSON básica
-    install(ContentNegotiation) {
-        json(Json {
-            prettyPrint = true
-            ignoreUnknownKeys = true
-        })
+    // 1. Iniciar Koin (DI) antes que nada
+    install(Koin) {
+        modules(appModule)
     }
 
-    // Ruta de prueba temporal para verificar el commit
-    routing {
-        get("/") {
-            call.respondText("Tournify Backend API")
-        }
-    }
+    // 2. Configurar Plugins
+    configureSerialization()
+    configureSecurity()
 
-    println("Corriendo sistema")
+    // 3. Iniciar Base de Datos
+    DatabaseFactory.init(environment.config)
+
+    // 4. Registrar Rutas
+    configureRouting()
 }
