@@ -57,6 +57,10 @@ data class SportSettingsDto(
     val extraTime: Boolean?,
     val penalties: Boolean?
 )
+@Serializable
+data class JoinTournamentRequest(
+    val teamId: String
+)
 
 // --- RESPONSES (Lo que devuelves a Angular) ---
 

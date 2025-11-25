@@ -69,9 +69,8 @@ class PostgresTournamentRepository : TournamentRepository {
         TournamentsTable.insert {
             it[id] = tournament.id
             it[organizerId] = tournament.organizerId
-            it[sportId] = tournament.sportId
+            it[sportId] = tournament.sportId ?: throw IllegalArgumentException("Sport ID is required")
             it[name] = tournament.name
-            
             // ✅ AGREGADO: description (antes faltaba)
             it[description] = tournament.description
             

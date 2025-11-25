@@ -14,7 +14,9 @@ fun CreateTeamRequest.toDomain(captainId: UUID): Team {
         description = this.description,
         contactEmail = this.contactEmail,
         contactPhone = this.contactPhone,
-        captainId = captainId
+        captainId = captainId,
+        logoUrl = null, 
+        isActive = true
     )
 }
 
@@ -36,6 +38,8 @@ fun AddMemberRequest.toDomain(teamId: UUID): TeamMember {
         memberPhone = null,
         role = this.role,
         jerseyNumber = this.jerseyNumber,
-        position = this.position
+        position = this.position,
+                isActive = true
+
     )
 }

@@ -53,6 +53,7 @@ fun Route.userRoutes() {
                     call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Error al actualizar"))
                 }
             }
+            
 
             // 3. Subir Avatar (Placeholder para S3)
             post("/me/avatar") {

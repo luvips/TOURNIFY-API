@@ -11,7 +11,11 @@ fun RegisterRequest.toDomain(): User {
         passwordHash = "", // Se llenará en el Caso de Uso al hashear
         firstName = this.firstName,
         lastName = this.lastName,
-        role = this.role
+        role = this.role,
+        phone = null,
+        avatarUrl = null,
+        isActive = true,
+        emailVerified = false
     )
 }
 

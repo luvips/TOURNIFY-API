@@ -114,7 +114,7 @@ class PostgresMatchRepository : MatchRepository {
     )
 
     // --- STANDINGS ---
-    override suspend fun getStandings(tournamentId: UUID): List<GroupStanding> = dbQuery {
+     suspend fun getStandings(tournamentId: UUID): List<GroupStanding> = dbQuery {
         // En un caso real, haríamos un JOIN con TournamentGroups para filtrar por torneo
         // Aquí simplificado: devuelve todo lo que haya en la tabla standings
         GroupStandingsTable.selectAll()
