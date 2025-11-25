@@ -8,10 +8,15 @@ import com.torneos.infrastructure.adapters.output.persistence.tables.TournamentF
 import com.torneos.infrastructure.adapters.output.persistence.tables.TournamentsTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import java.time.Instant
 import java.util.UUID
 
 class PostgresTournamentRepository : TournamentRepository {
 
+    /**
+     * Mapea una fila de BD al modelo de dominio Tournament
+     * ✅ CORREGIDO: Incluye todos los campos, usa campos separados en vez de groupConfigJson
+     */
     private fun ResultRow.toTournament() = Tournament(
         id = this[TournamentsTable.id],
         organizerId = this[TournamentsTable.organizerId],
@@ -22,7 +27,10 @@ class PostgresTournamentRepository : TournamentRepository {
         sportSubType = this[TournamentsTable.sportSubType],
         tournamentType = this[TournamentsTable.tournamentType],
         category = this[TournamentsTable.category],
-        eliminationMode = this[TournamentsTable.eliminationMode],
+        
+        // ✅ CORREGIDO: Conversión de String a EliminationMode usando helper
+        eliminationMode = this[TournamentsTable.eliminationMode].toEliminationMode(),
+        
         location = this[TournamentsTable.location],
         startDate = this[TournamentsTable.startDate],
         endDate = this[TournamentsTable.endDate],
@@ -35,7 +43,12 @@ class PostgresTournamentRepository : TournamentRepository {
         requiresApproval = this[TournamentsTable.requiresApproval],
         accessCode = this[TournamentsTable.accessCode],
         hasGroupStage = this[TournamentsTable.hasGroupStage],
-        groupConfigJson = this[TournamentsTable.groupConfig],
+        
+        // ✅ CORREGIDO: Mapear campos separados en vez de JSON
+        numberOfGroups = this[TournamentsTable.numberOfGroups],
+        teamsPerGroup = this[TournamentsTable.teamsPerGroup],
+        teamsAdvancePerGroup = this[TournamentsTable.teamsAdvancePerGroup],
+        
         sportSettingsJson = this[TournamentsTable.sportSettings],
         allowTies = this[TournamentsTable.allowTies],
         pointsForWin = this[TournamentsTable.pointsForWin],
@@ -48,35 +61,56 @@ class PostgresTournamentRepository : TournamentRepository {
         updatedAt = this[TournamentsTable.updatedAt]
     )
 
+    /**
+     * ✅ CORREGIDO: Crear torneo con TODOS los campos
+     * Antes faltaban: description, imageUrl, numberOfGroups, teamsPerGroup, teamsAdvancePerGroup
+     */
     override suspend fun create(tournament: Tournament): Tournament = dbQuery {
         TournamentsTable.insert {
             it[id] = tournament.id
             it[organizerId] = tournament.organizerId
             it[sportId] = tournament.sportId
             it[name] = tournament.name
+            
+            // ✅ AGREGADO: description (antes faltaba)
+            it[description] = tournament.description
+            
             it[sport] = tournament.sport
             it[sportSubType] = tournament.sportSubType
             it[tournamentType] = tournament.tournamentType
             it[category] = tournament.category
-            it[eliminationMode] = tournament.eliminationMode
+            
+            // ✅ CORREGIDO: Conversión de Enum a String
+            it[eliminationMode] = tournament.eliminationMode.toDbString()
+            
             it[location] = tournament.location
             it[startDate] = tournament.startDate
             it[endDate] = tournament.endDate
             it[registrationDeadline] = tournament.registrationDeadline
             it[maxTeams] = tournament.maxTeams
+            it[currentTeams] = tournament.currentTeams
             it[registrationFee] = tournament.registrationFee
             it[prizePool] = tournament.prizePool
             it[isPrivate] = tournament.isPrivate
             it[requiresApproval] = tournament.requiresApproval
             it[accessCode] = tournament.accessCode
             it[hasGroupStage] = tournament.hasGroupStage
-            it[groupConfig] = tournament.groupConfigJson
+            
+            // ✅ AGREGADO: Campos de configuración de grupos (antes faltaban)
+            it[numberOfGroups] = tournament.numberOfGroups
+            it[teamsPerGroup] = tournament.teamsPerGroup
+            it[teamsAdvancePerGroup] = tournament.teamsAdvancePerGroup
+            
             it[sportSettings] = tournament.sportSettingsJson
             it[allowTies] = tournament.allowTies
             it[pointsForWin] = tournament.pointsForWin
             it[pointsForDraw] = tournament.pointsForDraw
             it[pointsForLoss] = tournament.pointsForLoss
             it[rulesText] = tournament.rulesText
+            
+            // ✅ AGREGADO: imageUrl (antes faltaba)
+            it[imageUrl] = tournament.imageUrl
+            
             it[status] = tournament.status
         }
         tournament
@@ -95,12 +129,57 @@ class PostgresTournamentRepository : TournamentRepository {
             .map { it.toTournament() }
     }
 
+    /**
+     * ✅ CORREGIDO: UPDATE con TODOS los campos editables
+     * Antes solo actualizaba: name, status, currentTeams
+     */
     override suspend fun update(tournament: Tournament): Tournament? = dbQuery {
         val rows = TournamentsTable.update({ TournamentsTable.id eq tournament.id }) {
+            // Básicos
             it[name] = tournament.name
+            it[description] = tournament.description
             it[status] = tournament.status
+            
+            // Fechas
+            it[startDate] = tournament.startDate
+            it[endDate] = tournament.endDate
+            it[registrationDeadline] = tournament.registrationDeadline
+            
+            // Capacidad y Costos
+            it[maxTeams] = tournament.maxTeams
             it[currentTeams] = tournament.currentTeams
-            // ... Mapear otros campos editables
+            it[registrationFee] = tournament.registrationFee
+            it[prizePool] = tournament.prizePool
+            
+            // Configuración
+            it[location] = tournament.location
+            it[eliminationMode] = tournament.eliminationMode.toDbString()
+            it[category] = tournament.category
+            
+            // Privacidad
+            it[isPrivate] = tournament.isPrivate
+            it[requiresApproval] = tournament.requiresApproval
+            it[accessCode] = tournament.accessCode
+            
+            // Grupos
+            it[hasGroupStage] = tournament.hasGroupStage
+            it[numberOfGroups] = tournament.numberOfGroups
+            it[teamsPerGroup] = tournament.teamsPerGroup
+            it[teamsAdvancePerGroup] = tournament.teamsAdvancePerGroup
+            
+            // Reglas
+            it[allowTies] = tournament.allowTies
+            it[pointsForWin] = tournament.pointsForWin
+            it[pointsForDraw] = tournament.pointsForDraw
+            it[pointsForLoss] = tournament.pointsForLoss
+            
+            // Media
+            it[imageUrl] = tournament.imageUrl
+            it[rulesText] = tournament.rulesText
+            it[sportSettings] = tournament.sportSettingsJson
+            
+            // ✅ CRÍTICO: Actualizar timestamp de modificación
+            it[updatedAt] = Instant.now()
         }
         if (rows > 0) tournament else null
     }

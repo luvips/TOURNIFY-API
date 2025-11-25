@@ -18,7 +18,8 @@ object TournamentsTable : Table("tournaments") {
     val tournamentType = varchar("tournament_type", 50)
     val category = varchar("category", 50).nullable()
     
-    // ⚠️ CAMBIO IMPORTANTE: Lo definimos como varchar simple para evitar conflictos de tipos
+    // ✅ CORREGIDO: eliminationMode como varchar (no enum de postgres)
+    // Esto coincide con la definición real de la BD
     val eliminationMode = varchar("elimination_mode", 50).nullable()
     
     val location = varchar("location", 200).nullable()
@@ -37,11 +38,12 @@ object TournamentsTable : Table("tournaments") {
     
     val hasGroupStage = bool("has_group_stage").default(false)
     
-    // ⚠️ NUEVOS CAMPOS (Faltaban estos para corregir el error de parámetros)
+    // ✅ CAMPOS SEPARADOS (no usar groupConfig JSON)
     val numberOfGroups = integer("number_of_groups").nullable()
     val teamsPerGroup = integer("teams_per_group").nullable()
     val teamsAdvancePerGroup = integer("teams_advance_per_group").nullable()
     
+    // ✅ CORREGIDO: Solo sportSettings (sin groupConfig)
     val sportSettings = text("sport_settings").default("{}")
     
     val allowTies = bool("allow_ties").default(false)
@@ -57,8 +59,6 @@ object TournamentsTable : Table("tournaments") {
         
     val createdAt = timestamp("created_at").defaultExpression(CurrentTimestamp())
     val updatedAt = timestamp("updated_at").defaultExpression(CurrentTimestamp())
-
-
     
     override val primaryKey = PrimaryKey(id)
 }
