@@ -18,9 +18,9 @@ import org.koin.ktor.ext.inject
 import java.util.UUID
 
 fun Route.teamRoutes() {
-    val createTeamUseCase by inject<CreateTeamUseCase>()
-    val getMyTeamsUseCase by inject<GetMyTeamsUseCase>()
-    val addMemberUseCase by inject<AddMemberUseCase>()
+    val createTeamUseCase by application.inject<CreateTeamUseCase>()
+    val getMyTeamsUseCase by application.inject<GetMyTeamsUseCase>()
+    val addMemberUseCase by application.inject<AddMemberUseCase>()
 
     route("/teams") {
         authenticate("auth-jwt") {

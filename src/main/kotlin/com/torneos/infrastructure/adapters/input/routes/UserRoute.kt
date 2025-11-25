@@ -15,8 +15,8 @@ import org.koin.ktor.ext.inject
 import java.util.UUID
 
 fun Route.userRoutes() {
-    val getUserProfileUseCase by inject<GetUserProfileUseCase>()
-    val updateUserProfileUseCase by inject<UpdateUserProfileUseCase>()
+    val getUserProfileUseCase by application.inject<GetUserProfileUseCase>()
+    val updateUserProfileUseCase by application.inject<UpdateUserProfileUseCase>()
 
     route("/users") {
         authenticate("auth-jwt") {

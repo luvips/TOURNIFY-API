@@ -16,15 +16,15 @@ import org.koin.ktor.ext.inject
 import java.util.UUID
 
 fun Route.tournamentRoutes() {
-    val createTournamentUseCase by inject<CreateTournamentUseCase>()
-    val getTournamentsUseCase by inject<GetTournamentsUseCase>()
-    val getTournamentDetailsUseCase by inject<GetTournamentDetailsUseCase>()
-    val getTournamentStandingsUseCase by inject<GetTournamentStandingsUseCase>()
-    val getTournamentMatchesUseCase by inject<GetTournamentMatchesUseCase>()
-    val getTournamentTeamsUseCase by inject<GetTournamentTeamsUseCase>()
-    val joinTournamentUseCase by inject<JoinTournamentUseCase>()
-    val followTournamentUseCase by inject<FollowTournamentUseCase>()
-    val unfollowTournamentUseCase by inject<UnfollowTournamentUseCase>()
+    val createTournamentUseCase by application.inject<CreateTournamentUseCase>()
+    val getTournamentsUseCase by application.inject<GetTournamentsUseCase>()
+    val getTournamentDetailsUseCase by application.inject<GetTournamentDetailsUseCase>()
+    val getTournamentStandingsUseCase by application.inject<GetTournamentStandingsUseCase>()
+    val getTournamentMatchesUseCase by application.inject<GetTournamentMatchesUseCase>()
+    val getTournamentTeamsUseCase by application.inject<GetTournamentTeamsUseCase>()
+    val joinTournamentUseCase by application.inject<JoinTournamentUseCase>()
+    val followTournamentUseCase by application.inject<FollowTournamentUseCase>()
+    val unfollowTournamentUseCase by application.inject<UnfollowTournamentUseCase>()
 
     route("/tournaments") {
 

@@ -15,8 +15,8 @@ import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
 
 fun Route.authRoutes() {
-    val loginUseCase by inject<LoginUseCase>()
-    val registerUseCase by inject<RegisterUserUseCase>()
+    val loginUseCase by application.inject<LoginUseCase>()
+    val registerUseCase by application.inject<RegisterUserUseCase>()
 
     route("/auth") {
         post("/register") {

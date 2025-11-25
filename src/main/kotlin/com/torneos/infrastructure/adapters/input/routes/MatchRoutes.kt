@@ -16,8 +16,8 @@ import java.util.UUID
 
 fun Route.matchRoutes() {
     // Inyección de Casos de Uso
-    val updateMatchResultUseCase by inject<UpdateMatchResultUseCase>()
-    val getMatchDetailsUseCase by inject<GetMatchDetailsUseCase>()
+    val updateMatchResultUseCase by application.inject<UpdateMatchResultUseCase>()
+    val getMatchDetailsUseCase by application.inject<GetMatchDetailsUseCase>()
 
     route("/matches") {
 

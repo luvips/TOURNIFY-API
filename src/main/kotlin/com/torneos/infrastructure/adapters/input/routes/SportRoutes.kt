@@ -14,8 +14,8 @@ import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
 
 fun Route.sportRoutes() {
-    val getSportsUseCase by inject<GetSportsUseCase>()
-    val createSportUseCase by inject<CreateSportUseCase>()
+    val getSportsUseCase by application.inject<GetSportsUseCase>()
+    val createSportUseCase by application.inject<CreateSportUseCase>()
 
     route("/sports") {
         // Público: Listar deportes
