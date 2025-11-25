@@ -39,8 +39,8 @@ dependencies {
     implementation("com.zaxxer:HikariCP:5.1.0")
 
     // 2. INYECCIÓN DE DEPENDENCIAS (Koin para Ktor)
-    implementation("io.insert-koin:koin-ktor:3.5.3")
-    implementation("io.insert-koin:koin-logger-slf4j:3.5.3")
+    implementation("io.insert-koin:koin-ktor:4.0.2")
+    implementation("io.insert-koin:koin-logger-slf4j:4.0.2")
 
     // --- AWS S3 (SDK de Kotlin) ---
     implementation("aws.sdk.kotlin:s3:1.0.13")
