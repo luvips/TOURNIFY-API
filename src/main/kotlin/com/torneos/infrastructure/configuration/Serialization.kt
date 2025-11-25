@@ -1,27 +1,18 @@
 package com.torneos.infrastructure.configuration
 
-import com.fasterxml.jackson.databind.*
 import io.ktor.serialization.jackson.*
-import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import com.fasterxml.jackson.databind.SerializationFeature
 
 fun Application.configureSerialization() {
     install(ContentNegotiation) {
         jackson {
-                enable(SerializationFeature.INDENT_OUTPUT)
-            }
+            // Desactivar serialización de fechas como timestamps
+            disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
 
-        json()
-    }
-    routing {
-        get("/json/jackson") {
-                call.respond(mapOf("hello" to "world"))
-            }
-        get("/json/kotlinx-serialization") {
-            call.respond(mapOf("hello" to "world"))
+            // Formatear JSON con indentación (opcional, mejor para debug)
+            enable(SerializationFeature.INDENT_OUTPUT)
         }
     }
 }

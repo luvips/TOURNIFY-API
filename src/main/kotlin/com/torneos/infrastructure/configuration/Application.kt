@@ -10,7 +10,7 @@ fun main(args: Array<String>): Unit = EngineMain.main(args)
 fun Application.module() {
     // 1. Iniciar Koin (DI) antes que nada
     install(Koin) {
-        modules(appModule)
+        modules(getAppModule(environment.config))
     }
 
     // 2. Configurar Plugins

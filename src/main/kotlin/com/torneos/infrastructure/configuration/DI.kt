@@ -10,34 +10,35 @@ import com.torneos.domain.ports.*
 import com.torneos.infrastructure.adapters.output.persistence.repositories.*
 import com.torneos.infrastructure.adapters.output.services.BCryptAuthService
 import com.torneos.infrastructure.adapters.output.services.S3Service
+import io.ktor.server.config.*
 import org.koin.dsl.module
 
-val appModule = module {
+fun getAppModule(config: ApplicationConfig) = module {
     // --- INFRASTRUCTURE (Singletons) ---
 
     // Services
-    single<AuthServicePort> { BCryptAuthService(get()) } // Requiere config para JWT secret
-    single { S3Service(get()) } // Inyectamos ApplicationConfig
+    single<AuthServicePort> { BCryptAuthService(config) }
+    single<FileStoragePort> { S3Service(config) }
 
     // Repositories
     single<UserRepository> { PostgresUserRepository() }
     single<TournamentRepository> { PostgresTournamentRepository() }
     single<TeamRepository> { PostgresTeamRepository() }
-    single<SportRepository> { PostgresSportRepository() } // Asegúrate de crear este repo
+    single<SportRepository> { PostgresSportRepository() }
     single<MatchRepository> { PostgresMatchRepository() }
-    single<RegistrationRepository> { PostgresRegistrationRepository() } // Asegúrate de crear este repo
-    // single<StandingRepository> { PostgresStandingRepository() } // Si lo separaste
+    single<RegistrationRepository> { PostgresRegistrationRepository() }
+    single<TournamentGroupRepository> { PostgresTournamentGroupRepository() }
 
     // --- APPLICATION (Use Cases - Factory/Single) ---
-
+    
     // Auth
     single { LoginUseCase(get(), get()) }
     single { RegisterUserUseCase(get(), get()) }
-
+    
     // Users
     single { GetUserProfileUseCase(get()) }
     single { UpdateUserProfileUseCase(get()) }
-
+    
     // Tournaments
     single { CreateTournamentUseCase(get()) }
     single { GetTournamentsUseCase(get()) }
@@ -48,16 +49,16 @@ val appModule = module {
     single { JoinTournamentUseCase(get(), get(), get()) }
     single { FollowTournamentUseCase(get()) }
     single { UnfollowTournamentUseCase(get()) }
-
+    
     // Teams
     single { CreateTeamUseCase(get()) }
     single { GetMyTeamsUseCase(get()) }
     single { AddMemberUseCase(get()) }
-
+    
     // Sports
     single { GetSportsUseCase(get()) }
     single { CreateSportUseCase(get()) }
-
+    
     // Matches
     single { UpdateMatchResultUseCase(get()) }
     single { GetMatchDetailsUseCase(get()) }

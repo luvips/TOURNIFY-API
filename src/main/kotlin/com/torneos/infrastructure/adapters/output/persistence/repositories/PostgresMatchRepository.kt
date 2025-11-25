@@ -93,9 +93,25 @@ class PostgresMatchRepository : MatchRepository {
         result
     }
 
-    override suspend fun getMatchEvents(matchId: UUID): List<MatchResult> {
-        return emptyList() // TODO: Implementar select
+    override suspend fun getMatchEvents(matchId: UUID): List<MatchResult> = dbQuery {
+        MatchResultsTable.selectAll()
+            .where { MatchResultsTable.matchId eq matchId }
+            .orderBy(MatchResultsTable.eventTime to SortOrder.ASC)
+            .map { it.toMatchResult() }
     }
+
+    private fun ResultRow.toMatchResult() = MatchResult(
+        id = this[MatchResultsTable.id],
+        matchId = this[MatchResultsTable.matchId],
+        teamId = this[MatchResultsTable.teamId],
+        playerId = this[MatchResultsTable.playerId],
+        eventType = this[MatchResultsTable.eventType],
+        eventTime = this[MatchResultsTable.eventTime],
+        eventPeriod = this[MatchResultsTable.eventPeriod],
+        eventDataJson = this[MatchResultsTable.eventData],
+        notes = this[MatchResultsTable.notes],
+        createdAt = this[MatchResultsTable.createdAt]
+    )
 
     // --- STANDINGS ---
     override suspend fun getStandings(tournamentId: UUID): List<GroupStanding> = dbQuery {

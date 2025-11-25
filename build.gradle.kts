@@ -47,7 +47,7 @@ dependencies {
     implementation("aws.smithy.kotlin:aws-signing-default:1.0.13")
 
     // --- Ktor Client (Requerido por AWS SDK para hacer peticiones HTTP) ---
-    implementation("io.ktor:ktor-client-cio:3.0.0")
+    implementation("io.ktor:ktor-client-cio:$ktor_version")
 
     implementation("org.mindrot:jbcrypt:0.4")
 }
