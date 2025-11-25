@@ -7,23 +7,20 @@ import kotlinx.serialization.Serializable
 data class RegisterRequest(
     val username: String,
     val email: String,
-    val passwordHash: String, // El frontend debe enviar el hash o el backend hashearlo (usualmente raw password aquí)
-    val role: UserRole,
-    val firstName: String?,
-    val lastName: String?,
-    val phone: String?
+    val password: String, // El backend lo hasheará
+    val firstName: String,
+    val lastName: String,
+    val role: UserRole = UserRole.player
 )
 
 @Serializable
 data class LoginRequest(
     val email: String,
-    val passwordHash: String
+    val password: String
 )
 
 @Serializable
 data class AuthResponse(
     val token: String,
-    val userId: String,
-    val username: String,
-    val role: UserRole
+    val user: UserDto
 )
