@@ -20,3 +20,8 @@ data class UpdateProfileRequest(
     val lastName: String?,
     val phone: String?
 )
+
+@Serializable
+data class SwitchRoleRequest(
+    val role: UserRole
+)
