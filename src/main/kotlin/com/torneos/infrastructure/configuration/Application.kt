@@ -4,7 +4,7 @@ import com.torneos.infrastructure.adapters.output.persistence.DatabaseFactory
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.netty.*
-import io.ktor.server.plugins.statuspages.* // 👈 Importante
+import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import org.koin.ktor.plugin.Koin
 
