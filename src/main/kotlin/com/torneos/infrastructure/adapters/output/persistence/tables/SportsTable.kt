@@ -7,11 +7,7 @@ import org.jetbrains.exposed.sql.javatime.timestamp
 object SportsTable : Table("sports") {
     val id = uuid("id")
     val name = varchar("name", 50)
-<<<<<<< Updated upstream
     val category = varchar("category", 20)
-=======
-    val category = enumerationByName("category", 20, SportCategory::class)
->>>>>>> Stashed changes
     val icon = varchar("icon", 100).nullable()
     val defaultPlayersPerTeam = integer("default_players_per_team").nullable()
     val defaultMatchDuration = integer("default_match_duration").nullable()
