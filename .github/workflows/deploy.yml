@@ -73,7 +73,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           source: "app.jar"
           target: "/opt/apps/backend/"
-
+          strip_components: 3
       # 10. Post-Deploy
       - name: Start Service (Post-Deploy)
         uses: appleboy/ssh-action@v1.0.3
