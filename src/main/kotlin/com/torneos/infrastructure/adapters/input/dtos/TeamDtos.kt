@@ -22,9 +22,9 @@ data class TeamResponse(
 
 @Serializable
 data class AddMemberRequest(
-    val email: String?, // Para invitar por correo
-    val name: String,   // Nombre visual
-    val role: MemberRole,
-    val jerseyNumber: Int?,
-    val position: String?
+    val email: String,
+    val name: String? = null,
+    val role: MemberRole = MemberRole.player,
+    val jerseyNumber: Int? = null,
+    val position: String? = null
 )
