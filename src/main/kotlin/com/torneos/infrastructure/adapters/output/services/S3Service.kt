@@ -10,25 +10,21 @@ import com.torneos.domain.ports.FileStoragePort
 import io.ktor.server.config.*
 import java.util.UUID
 import kotlin.time.Duration.Companion.hours
+import org.slf4j.LoggerFactory
 
 class S3Service(config: ApplicationConfig) : FileStoragePort {
 
-    // Solo necesitamos el bucket y la región. ¡Adiós a las keys manuales!
+    private val logger = LoggerFactory.getLogger(S3Service::class.java)
     private val bucketName = config.property("aws.bucketName").getString()
     private val region = config.property("aws.region").getString()
-
-    /**
-     * Ya no necesitamos "getCredentialsProvider".
-     * El SDK de Kotlin detectará automáticamente que está en una EC2
-     * y usará el Rol IAM asignado. Magia pura. 🪄
-     */
+    // Se eliminaron accessKey y secretKey explícitos
 
     override suspend fun uploadFile(fileName: String, fileBytes: ByteArray, contentType: String): String {
         val uniqueKey = "${UUID.randomUUID()}-${fileName.replace(" ", "_")}"
 
+        // S3Client.fromEnvironment detectará automáticamente las credenciales (ej. Rol IAM)
         S3Client.fromEnvironment {
             this.region = this@S3Service.region
-            // No seteamos credentialsProvider manualmente = Usa Default Chain (IAM Role)
         }.use { s3 ->
             val request = PutObjectRequest {
                 bucket = bucketName
@@ -37,6 +33,7 @@ class S3Service(config: ApplicationConfig) : FileStoragePort {
                 this.contentType = contentType
             }
             s3.putObject(request)
+            logger.info("Archivo subido exitosamente a S3: $uniqueKey")
         }
 
         return uniqueKey
@@ -54,7 +51,8 @@ class S3Service(config: ApplicationConfig) : FileStoragePort {
                 key = objectKey
             }
 
-            val presignedRequest = s3.presignGetObject(request, duration = 24.hours)
+            // Genera una URL firmada válida por 24 horas
+            val presignedRequest = s3.presignGetObject(request, duration = 1224.hours)
             return presignedRequest.url.toString()
         }
     }
@@ -69,10 +67,11 @@ class S3Service(config: ApplicationConfig) : FileStoragePort {
                     key = objectKey
                 }
                 s3.deleteObject(request)
+                logger.info("Archivo eliminado de S3: $objectKey")
             }
             true
         } catch (e: Exception) {
-            e.printStackTrace()
+            logger.error("Error al eliminar archivo de S3: $objectKey", e)
             false
         }
     }
