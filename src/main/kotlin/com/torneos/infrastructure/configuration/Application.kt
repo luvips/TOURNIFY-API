@@ -31,8 +31,10 @@ fun Application.module() {
     }
 
     // 3. Resto de configuraciones
+
     configureSerialization()
     configureSecurity()
+    configureCors()
     DatabaseFactory.init(environment.config)
     configureRouting()
 }
