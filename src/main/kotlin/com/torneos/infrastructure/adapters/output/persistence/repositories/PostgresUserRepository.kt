@@ -64,6 +64,7 @@ class PostgresUserRepository : UserRepository {
             it[avatarUrl] = user.avatarUrl
             it[isActive] = user.isActive
             it[passwordHash] = user.passwordHash // Permitir actualizar contraseña
+            it[role] = user.role.name // Permitir actualizar rol
         }
         if (updatedRows > 0) user else null
     }
