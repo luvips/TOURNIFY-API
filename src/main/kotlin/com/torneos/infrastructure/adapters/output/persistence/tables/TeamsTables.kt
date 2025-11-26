@@ -33,7 +33,7 @@ object TeamMembersTable : Table("team_members") {
     val memberEmail = varchar("member_email", 100).nullable()
     val memberPhone = varchar("member_phone", 20).nullable()
 
-    val role = postgresEnumeration("role", "member_role", MemberRole::class.java).default(MemberRole.player)
+    val role = enumerationByName("role", 20, MemberRole::class).default(MemberRole.player)
     val jerseyNumber = integer("jersey_number").nullable()
     val position = varchar("position", 50).nullable()
 
@@ -50,8 +50,8 @@ object TeamRegistrationsTable : Table("team_registrations") {
     val groupId = uuid("group_id").references(TournamentGroupsTable.id, onDelete = ReferenceOption.SET_NULL).nullable()
 
     val registrationDate = timestamp("registration_date").defaultExpression(CurrentTimestamp())
-    val status = postgresEnumeration("status", "registration_status", RegistrationStatus::class.java).default(RegistrationStatus.pending)
-    val paymentStatus = postgresEnumeration("payment_status", "payment_status", PaymentStatus::class.java).default(PaymentStatus.unpaid)
+    val status = enumerationByName("status", 20, RegistrationStatus::class).default(RegistrationStatus.pending)
+    val paymentStatus = enumerationByName("payment_status", 20, PaymentStatus::class).default(PaymentStatus.unpaid)
 
     val additionalInfo = text("additional_info").nullable()
     val seedNumber = integer("seed_number").nullable()

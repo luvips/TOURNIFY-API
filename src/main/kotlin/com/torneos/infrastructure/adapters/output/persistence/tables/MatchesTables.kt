@@ -21,9 +21,8 @@ object MatchesTable : Table("matches") {
     val scheduledDate = timestamp("scheduled_date").nullable()
     val location = varchar("location", 200).nullable()
     val refereeId = uuid("referee_id").references(UsersTable.id, onDelete = ReferenceOption.SET_NULL).nullable()
-    
-    val status = postgresEnumeration("status", "match_status", MatchStatus::class.java).default(MatchStatus.scheduled)
-    
+
+    val status = enumerationByName("status", 20, MatchStatus::class).default(MatchStatus.scheduled)
     val scoreHome = integer("score_home").nullable()
     val scoreAway = integer("score_away").nullable()
     val winnerId = uuid("winner_id").references(TeamsTable.id, onDelete = ReferenceOption.SET_NULL).nullable()
