@@ -27,6 +27,7 @@ fun Route.tournamentRoutes() {
     val joinTournamentUseCase by application.inject<JoinTournamentUseCase>()
     val followTournamentUseCase by application.inject<FollowTournamentUseCase>()
     val unfollowTournamentUseCase by application.inject<UnfollowTournamentUseCase>()
+    val deleteTournamentUseCase by application.inject<DeleteTournamentUseCase>()
     val updateTournamentUseCase by application.inject<UpdateTournamentUseCase>()
     route("/tournaments") {
 
@@ -62,67 +63,39 @@ fun Route.tournamentRoutes() {
         }
 
         authenticate("auth-jwt") {
-            // 3. Crear Torneo (POST) - ¡AQUÍ ESTABA EL PROBLEMA 400!
+            // 3. Crear Torneo (POST)
             post {
                 val principal = call.principal<JWTPrincipal>()
                 val userIdStr = principal?.payload?.getClaim("id")?.asString()
                 val userRole = principal?.payload?.getClaim("role")?.asString()
 
-                println("📝 [CREATE TOURNAMENT] Usuario: $userIdStr | Rol: $userRole")
-
                 if (userIdStr == null) {
                     return@post call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Token inválido"))
                 }
 
-                // Permitir crear torneo a 'organizer' y 'admin'
                 if (userRole !in listOf("organizer", "admin")) {
-                    println("⛔ [CREATE TOURNAMENT] Acceso denegado. Rol actual: $userRole")
                     return@post call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Solo organizadores pueden crear torneos. Tu rol es: $userRole"))
                 }
 
                 try {
-                    // 1. Intentar recibir el JSON
                     val request = call.receive<CreateTournamentRequest>()
-                    println("📦 [CREATE TOURNAMENT] JSON Recibido: $request")
-
-                    // 2. Convertir a Dominio (Aquí suelen fallar las Fechas o UUIDs)
                     val domainTournament = request.toDomain(organizerId = UUID.fromString(userIdStr))
-                    println("⚙️ [CREATE TOURNAMENT] Dominio convertido exitosamente")
-
-                    // 3. Ejecutar Caso de Uso (Aquí puede fallar si el sportId no existe en BD)
                     val created = createTournamentUseCase.execute(domainTournament)
-
-                    println("✅ [CREATE TOURNAMENT] Torneo creado: ${created.id}")
                     call.respond(HttpStatusCode.Created, created.toResponse())
 
                 } catch (e: SerializationException) {
-                    println("❌ [ERROR JSON] El formato del JSON es incorrecto: ${e.message}")
-                    call.respond(HttpStatusCode.BadRequest, mapOf(
-                        "error" to "JSON mal formado o tipo de dato incorrecto (ej. enviaste texto en un número).",
-                        "details" to e.message
-                    ))
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "JSON mal formado", "details" to e.message))
                 } catch (e: DateTimeParseException) {
-                    println("❌ [ERROR FECHA] Formato de fecha inválido: ${e.message}")
-                    call.respond(HttpStatusCode.BadRequest, mapOf(
-                        "error" to "Formato de fecha inválido. Se espera ISO-8601 (ej: 2025-12-01T10:00:00Z).",
-                        "details" to e.message
-                    ))
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Formato de fecha inválido", "details" to e.message))
                 } catch (e: IllegalArgumentException) {
-                    println("❌ [ERROR ARGUMENTO] UUID o Dato inválido: ${e.message}")
-                    call.respond(HttpStatusCode.BadRequest, mapOf(
-                        "error" to "Datos inválidos (UUID incorrecto o SportID no existe).",
-                        "details" to e.message
-                    ))
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Datos inválidos", "details" to e.message))
                 } catch (e: Exception) {
-                    println("❌ [ERROR GENERAL] Excepción no controlada:")
                     e.printStackTrace()
-                    call.respond(HttpStatusCode.InternalServerError, mapOf(
-                        "error" to "Error interno del servidor.",
-                        "details" to e.message
-                    ))
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error interno del servidor", "details" to e.message))
                 }
             }
 
+            // 4. Actualizar Torneo (PUT)
             put("/{id}") {
                 val tournamentIdStr = call.parameters["id"]
                 val userIdStr = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
@@ -133,33 +106,39 @@ fun Route.tournamentRoutes() {
                 }
 
                 try {
-                    // 1. Recibir datos nuevos
                     val request = call.receive<CreateTournamentRequest>()
-
-                    // 2. Convertir a dominio (Usamos el ID del usuario como 'organizer' temporalmente para el mapper)
                     val domainTournament = request.toDomain(organizerId = UUID.fromString(userIdStr))
-
-                    // 3. Ejecutar actualización
                     val updated = updateTournamentUseCase.execute(
                         id = UUID.fromString(tournamentIdStr),
                         tournament = domainTournament,
                         requesterId = UUID.fromString(userIdStr)
                     )
-
                     call.respond(HttpStatusCode.OK, updated.toResponse())
-
                 } catch (e: SecurityException) {
                     call.respond(HttpStatusCode.Forbidden, mapOf("error" to e.message))
                 } catch (e: NoSuchElementException) {
                     call.respond(HttpStatusCode.NotFound, mapOf("error" to e.message))
                 } catch (e: Exception) {
-                    println("❌ Error en PUT: ${e.message}")
                     e.printStackTrace()
                     call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Datos inválidos", "details" to e.message))
                 }
             }
 
-            // 4. Unirse a Torneo
+            // 5. Borrar Torneo (DELETE)
+            delete("/{id}") {
+                val id = call.parameters["id"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                val userId = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
+                    ?: return@delete call.respond(HttpStatusCode.Unauthorized)
+
+                try {
+                    deleteTournamentUseCase.execute(UUID.fromString(id), UUID.fromString(userId))
+                    call.respond(HttpStatusCode.OK, mapOf("message" to "Torneo eliminado"))
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to (e.message ?: "Error")))
+                }
+            }
+
+            // 6. Unirse a Torneo
             post("/{id}/join") {
                 val userIdStr = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
                 val tournamentIdStr = call.parameters["id"]
