@@ -27,6 +27,8 @@ fun Route.tournamentRoutes() {
     val joinTournamentUseCase by application.inject<JoinTournamentUseCase>()
     val followTournamentUseCase by application.inject<FollowTournamentUseCase>()
     val unfollowTournamentUseCase by application.inject<UnfollowTournamentUseCase>()
+    val getFollowedTournamentsUseCase by application.inject<GetFollowedTournamentsUseCase>()
+    val getMyTournamentsUseCase by application.inject<GetMyTournamentsUseCase>()
 
     // (Otros use cases como standings/matches/teams se pueden inyectar si se usan)
 
@@ -180,6 +182,34 @@ fun Route.tournamentRoutes() {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "Dejaste de seguir este torneo"))
                 } catch (e: Exception) {
                     call.respond(HttpStatusCode.BadRequest, mapOf("error" to (e.message ?: "Error al dejar de seguir")))
+                }
+            }
+
+            // 9. Obtener Torneos Seguidos (Jugadores)
+            get("/followed") {
+                val userIdStr = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
+                
+                if (userIdStr == null) return@get call.respond(HttpStatusCode.Unauthorized)
+
+                try {
+                    val tournaments = getFollowedTournamentsUseCase.execute(UUID.fromString(userIdStr))
+                    call.respond(HttpStatusCode.OK, tournaments.map { it.toResponse() })
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("error" to (e.message ?: "Error al obtener torneos seguidos")))
+                }
+            }
+
+            // 10. Obtener Mis Torneos (Organizadores)
+            get("/my-tournaments") {
+                val userIdStr = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
+                
+                if (userIdStr == null) return@get call.respond(HttpStatusCode.Unauthorized)
+
+                try {
+                    val tournaments = getMyTournamentsUseCase.execute(UUID.fromString(userIdStr))
+                    call.respond(HttpStatusCode.OK, tournaments.map { it.toResponse() })
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("error" to (e.message ?: "Error al obtener tus torneos")))
                 }
             }
         }

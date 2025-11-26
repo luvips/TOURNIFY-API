@@ -50,6 +50,8 @@ fun getAppModule(config: ApplicationConfig) = module {
     single { JoinTournamentUseCase(get(), get(), get()) }
     single { FollowTournamentUseCase(get()) }
     single { UnfollowTournamentUseCase(get()) }
+    single { GetFollowedTournamentsUseCase(get()) }
+    single { GetMyTournamentsUseCase(get()) }
     single { UpdateTournamentUseCase(get()) }
     single<StandingRepository> { PostgresStandingRepository() }
     single { UpdateTournamentUseCase(get()) }
