@@ -6,19 +6,21 @@ import io.ktor.server.config.*
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import javax.sql.DataSource
 
 object DatabaseFactory {
 
+    private var datasource: DataSource? = null
+
     fun init(config: ApplicationConfig) {
-        val driverClassName = config.property("storage.driverClassName").getString()
-        val jdbcUrl = config.property("storage.jdbcUrl").getString()
-        
-        val username = config.property("storage.username").getString()
-        val password = config.property("storage.password").getString()
-
-        val database = Database.connect(hikari(driverClassName, jdbcUrl, username, password))
-        
-
+        if (datasource == null) {
+            val driverClassName = config.property("storage.driverClassName").getString()
+            val jdbcUrl = config.property("storage.jdbcUrl").getString()
+            val username = config.property("storage.username").getString()
+            val password = config.property("storage.password").getString()
+            datasource = hikari(driverClassName, jdbcUrl, username, password)
+            Database.connect(datasource!!)
+        }
     }
 
     private fun hikari(driver: String, url: String, user: String, pass: String): HikariDataSource {
@@ -27,15 +29,10 @@ object DatabaseFactory {
         config.jdbcUrl = url
         config.username = user
         config.password = pass
-        
-        // Configuraciones óptimas para HikariCP
         config.maximumPoolSize = 10
         config.isAutoCommit = false
         config.transactionIsolation = "TRANSACTION_REPEATABLE_READ"
-        
-        // Validar conexión al iniciar
         config.validate()
-        
         return HikariDataSource(config)
     }
 

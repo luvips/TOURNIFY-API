@@ -2,7 +2,7 @@ package com.torneos.infrastructure.adapters.input.routes
 
 import com.torneos.application.usecases.tournaments.*
 import com.torneos.infrastructure.adapters.input.dtos.CreateTournamentRequest
-import com.torneos.infrastructure.adapters.input.dtos.*
+import com.torneos.infrastructure.adapters.input.dtos.JoinTournamentRequest
 import com.torneos.infrastructure.adapters.input.mappers.toDomain
 import com.torneos.infrastructure.adapters.input.mappers.toResponse
 import io.ktor.http.*
@@ -12,7 +12,9 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.SerializationException
 import org.koin.ktor.ext.inject
+import java.time.format.DateTimeParseException
 import java.util.UUID
 
 fun Route.tournamentRoutes() {
@@ -28,20 +30,17 @@ fun Route.tournamentRoutes() {
 
     route("/tournaments") {
 
-        // 1. Listar torneos
         get {
             try {
                 val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
                 val size = call.request.queryParameters["size"]?.toIntOrNull() ?: 20
                 val tournaments = getTournamentsUseCase.execute(page, size)
-                // ✅ CORREGIDO: Mapear lista a Response
                 call.respond(HttpStatusCode.OK, tournaments.map { it.toResponse() })
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to (e.message ?: "Error desconocido")))
             }
         }
 
-        // 2. Detalle
         get("/{id}") {
             val idParam = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
             try {
@@ -52,52 +51,17 @@ fun Route.tournamentRoutes() {
             }
         }
 
-        // 3. Standings (No requiere mapper si devuelve GroupStanding tal cual, o crear StandingResponse)
-        get("/{id}/standings") {
-            val idParam = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-            try {
-                val standings = getTournamentStandingsUseCase.execute(UUID.fromString(idParam))
-                call.respond(HttpStatusCode.OK, standings)
-            } catch (e: Exception) {
-                call.respond(HttpStatusCode.OK, emptyList<Any>())
-            }
-        }
-
-        // 4. Partidos (Bracket)
-        get("/{id}/matches") {
-            val idParam = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-            try {
-                val matches = getTournamentMatchesUseCase.execute(UUID.fromString(idParam))
-                // ✅ CORREGIDO: Mapear a MatchResponse (Importante para el frontend)
-                call.respond(HttpStatusCode.OK, matches.map { it.toResponse() })
-            } catch (e: Exception) {
-                e.printStackTrace()
-                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error al cargar partidos"))
-            }
-        }
-
-        // 5. Equipos
-        get("/{id}/teams") {
-            val idParam = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-            try {
-                val teams = getTournamentTeamsUseCase.execute(UUID.fromString(idParam))
-                // ✅ CORREGIDO: Mapear a TeamResponse
-                call.respond(HttpStatusCode.OK, teams.map { it.toResponse() })
-            } catch (e: Exception) {
-                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error al cargar equipos"))
-            }
-        }
-        
-
         authenticate("auth-jwt") {
-            // 6. Crear Torneo
             post {
                 val principal = call.principal<JWTPrincipal>()
                 val userIdStr = principal?.payload?.getClaim("id")?.asString()
-                
+                val userRole = principal?.payload?.getClaim("role")?.asString()
+
                 if (userIdStr == null) {
-                    call.respond(HttpStatusCode.Unauthorized)
-                    return@post
+                    return@post call.respond(HttpStatusCode.Unauthorized)
+                }
+                if (userRole !in listOf("organizer", "admin")) {
+                    return@post call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Acceso denegado."))
                 }
 
                 try {
@@ -105,15 +69,31 @@ fun Route.tournamentRoutes() {
                     val domainTournament = request.toDomain(organizerId = UUID.fromString(userIdStr))
                     val created = createTournamentUseCase.execute(domainTournament)
                     call.respond(HttpStatusCode.Created, created.toResponse())
+
+                } catch (e: SerializationException) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf(
+                        "error" to "JSON mal formado o tipo de dato incorrecto.",
+                        "details" to e.message
+                    ))
+                } catch (e: DateTimeParseException) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf(
+                        "error" to "Formato de fecha inválido.",
+                        "details" to "La fecha '${e.parsedString}' no es válida. Se espera formato ISO 8601 (ej: 2025-12-01T10:00:00Z)."
+                    ))
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf(
+                        "error" to "Argumento inválido.",
+                        "details" to "Probablemente un UUID es incorrecto o el sportId no existe. ${e.message}"
+                    ))
                 } catch (e: Exception) {
-                    e.printStackTrace()
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to (e.message ?: "Error al crear")))
+                    call.respond(HttpStatusCode.InternalServerError, mapOf(
+                        "error" to "Error inesperado en el servidor.",
+                        "details" to e.message
+                    ))
                 }
             }
             
-            // ... (Resto de endpoints join/follow se mantienen igual pero asegúrate de importar UUID correctamente)
-            
-             post("/{id}/join") {
+            post("/{id}/join") {
                 val userIdStr = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
                 val tournamentIdStr = call.parameters["id"]
                 if (userIdStr == null || tournamentIdStr == null) { 
@@ -123,11 +103,7 @@ fun Route.tournamentRoutes() {
 
                 try {
                     val request = call.receive<JoinTournamentRequest>()
-                
-
                     joinTournamentUseCase.execute(
-                    
-                
                         userId = UUID.fromString(userIdStr),
                         tournamentId = UUID.fromString(tournamentIdStr),
                         teamId = UUID.fromString(request.teamId)
@@ -137,8 +113,6 @@ fun Route.tournamentRoutes() {
                     call.respond(HttpStatusCode.Conflict, mapOf("error" to (e.message ?: "Error")))
                 }
             }
-            
-            // Endpoints follow/unfollow omitidos por brevedad (estaban bien en general)
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.torneos.infrastructure.adapters.output.persistence.repositories
 
+import com.torneos.domain.enums.SportCategory
 import com.torneos.domain.models.Sport
 import com.torneos.domain.ports.SportRepository
 import com.torneos.infrastructure.adapters.output.persistence.DatabaseFactory.dbQuery
@@ -12,7 +13,7 @@ class PostgresSportRepository : SportRepository {
     private fun ResultRow.toSport() = Sport(
         id = this[SportsTable.id],
         name = this[SportsTable.name],
-        category = this[SportsTable.category],
+        category = SportCategory.valueOf(this[SportsTable.category]),
         icon = this[SportsTable.icon],
         defaultPlayersPerTeam = this[SportsTable.defaultPlayersPerTeam],
         defaultMatchDuration = this[SportsTable.defaultMatchDuration],
@@ -35,7 +36,7 @@ class PostgresSportRepository : SportRepository {
         SportsTable.insert {
             it[id] = sport.id
             it[name] = sport.name
-            it[category] = sport.category
+            it[category] = sport.category.name
             it[icon] = sport.icon
             it[defaultPlayersPerTeam] = sport.defaultPlayersPerTeam
             it[defaultMatchDuration] = sport.defaultMatchDuration

@@ -1,5 +1,6 @@
 package com.torneos.infrastructure.adapters.output.persistence.repositories
 
+import com.torneos.domain.enums.UserRole
 import com.torneos.domain.models.User
 import com.torneos.domain.ports.UserRepository
 import com.torneos.infrastructure.adapters.output.persistence.DatabaseFactory.dbQuery
@@ -16,7 +17,7 @@ class PostgresUserRepository : UserRepository {
         username = this[UsersTable.username],
         email = this[UsersTable.email],
         passwordHash = this[UsersTable.passwordHash],
-        role = this[UsersTable.role],
+        role = UserRole.valueOf(this[UsersTable.role]),
         firstName = this[UsersTable.firstName],
         lastName = this[UsersTable.lastName],
         phone = this[UsersTable.phone],
@@ -33,7 +34,7 @@ class PostgresUserRepository : UserRepository {
             it[username] = user.username
             it[email] = user.email
             it[passwordHash] = user.passwordHash
-            it[role] = user.role
+            it[role] = user.role.name
             it[firstName] = user.firstName
             it[lastName] = user.lastName
             it[phone] = user.phone

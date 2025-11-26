@@ -1,10 +1,8 @@
 package com.torneos.infrastructure.adapters.output.persistence.tables
 
-import com.torneos.domain.enums.UserRole
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.CurrentTimestamp
-import org.jetbrains.exposed.sql.javatime.CurrentDateTime
-import org.jetbrains.exposed.sql.javatime.*
+import org.jetbrains.exposed.sql.javatime.timestamp
 
 object UsersTable : Table("users") {
     val id = uuid("id")
@@ -12,8 +10,7 @@ object UsersTable : Table("users") {
     val email = varchar("email", 100).uniqueIndex()
     val passwordHash = varchar("password_hash", 255)
     
-    val role = postgresEnumeration("role", "user_role", UserRole::class.java)
-        .default(UserRole.player)
+    val role = varchar("role", 20).default("player")
 
     val firstName = varchar("first_name", 50).nullable()
     val lastName = varchar("last_name", 50).nullable()

@@ -1,17 +1,22 @@
 package com.torneos.application.usecases.tournaments
 
 import com.torneos.domain.models.Tournament
+import com.torneos.domain.ports.SportRepository
 import com.torneos.domain.ports.TournamentRepository
-import java.time.Instant
 
-class CreateTournamentUseCase(private val tournamentRepository: TournamentRepository) {
+class CreateTournamentUseCase(
+    private val tournamentRepository: TournamentRepository,
+    private val sportRepository: SportRepository
+) {
     suspend fun execute(tournament: Tournament): Tournament {
-        if (tournament.startDate.isBefore(Instant.now())) {
-            throw IllegalArgumentException("La fecha de inicio no puede ser en el pasado")
-        }
-        if (tournament.maxTeams < 2) {
-            throw IllegalArgumentException("El torneo debe tener al menos 2 equipos")
-        }
-        return tournamentRepository.create(tournament)
+        // 1. Validar que el deporte existe y obtener su nombre
+        val sport = sportRepository.findById(tournament.sportId)
+            ?: throw IllegalArgumentException("El sportId '${tournament.sportId}' no existe.")
+
+        // 2. Crear el objeto final con el nombre del deporte
+        val tournamentWithSportName = tournament.copy(sport = sport.name)
+
+        // 3. Guardar en la base de datos
+        return tournamentRepository.create(tournamentWithSportName)
     }
 }

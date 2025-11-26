@@ -13,104 +13,81 @@ import java.util.UUID
 
 class PostgresTournamentRepository : TournamentRepository {
 
-    /**
-     * Mapea una fila de BD al modelo de dominio Tournament
-     * ✅ CORREGIDO: Incluye todos los campos, usa campos separados en vez de groupConfigJson
-     */
     private fun ResultRow.toTournament() = Tournament(
         id = this[TournamentsTable.id],
-        organizerId = this[TournamentsTable.organizerId],
-        sportId = this[TournamentsTable.sportId],
         name = this[TournamentsTable.name],
         description = this[TournamentsTable.description],
+        sportId = this[TournamentsTable.sport_id],
         sport = this[TournamentsTable.sport],
-        sportSubType = this[TournamentsTable.sportSubType],
-        tournamentType = this[TournamentsTable.tournamentType],
+        sportSubType = this[TournamentsTable.sport_sub_type],
+        organizerId = this[TournamentsTable.organizer_id],
+        tournamentType = this[TournamentsTable.tournament_type],
         category = this[TournamentsTable.category],
-        
-        // ✅ CORREGIDO: Conversión de String a EliminationMode usando helper
-        eliminationMode = this[TournamentsTable.eliminationMode].toEliminationMode(),
-        
+        eliminationMode = this[TournamentsTable.elimination_mode],
         location = this[TournamentsTable.location],
-        startDate = this[TournamentsTable.startDate],
-        endDate = this[TournamentsTable.endDate],
-        registrationDeadline = this[TournamentsTable.registrationDeadline],
-        maxTeams = this[TournamentsTable.maxTeams],
-        currentTeams = this[TournamentsTable.currentTeams],
-        registrationFee = this[TournamentsTable.registrationFee],
-        prizePool = this[TournamentsTable.prizePool],
-        isPrivate = this[TournamentsTable.isPrivate],
-        requiresApproval = this[TournamentsTable.requiresApproval],
-        accessCode = this[TournamentsTable.accessCode],
-        hasGroupStage = this[TournamentsTable.hasGroupStage],
-        
-        // ✅ CORREGIDO: Mapear campos separados en vez de JSON
-        numberOfGroups = this[TournamentsTable.numberOfGroups],
-        teamsPerGroup = this[TournamentsTable.teamsPerGroup],
-        teamsAdvancePerGroup = this[TournamentsTable.teamsAdvancePerGroup],
-        
-        sportSettingsJson = this[TournamentsTable.sportSettings],
-        allowTies = this[TournamentsTable.allowTies],
-        pointsForWin = this[TournamentsTable.pointsForWin],
-        pointsForDraw = this[TournamentsTable.pointsForDraw],
-        pointsForLoss = this[TournamentsTable.pointsForLoss],
-        rulesText = this[TournamentsTable.rulesText],
-        imageUrl = this[TournamentsTable.imageUrl],
+        startDate = this[TournamentsTable.start_date],
+        endDate = this[TournamentsTable.end_date],
+        registrationDeadline = this[TournamentsTable.registration_deadline],
+        maxTeams = this[TournamentsTable.max_teams],
+        currentTeams = this[TournamentsTable.current_teams],
+        registrationFee = this[TournamentsTable.registration_fee],
+        prizePool = this[TournamentsTable.prize_pool],
+        isPrivate = this[TournamentsTable.is_private],
+        requiresApproval = this[TournamentsTable.requires_approval],
+        accessCode = this[TournamentsTable.access_code],
+        hasGroupStage = this[TournamentsTable.has_group_stage],
+        numberOfGroups = this[TournamentsTable.number_of_groups],
+        teamsPerGroup = this[TournamentsTable.teams_per_group],
+        teamsAdvancePerGroup = this[TournamentsTable.teams_advance_per_group],
+        sportSettingsJson = this[TournamentsTable.sport_settings],
+        allowTies = this[TournamentsTable.allow_ties],
+        pointsForWin = this[TournamentsTable.points_for_win],
+        pointsForDraw = this[TournamentsTable.points_for_draw],
+        pointsForLoss = this[TournamentsTable.points_for_loss],
+        rulesText = this[TournamentsTable.rules_text],
+        imageUrl = this[TournamentsTable.image_url],
         status = this[TournamentsTable.status],
-        createdAt = this[TournamentsTable.createdAt],
-        updatedAt = this[TournamentsTable.updatedAt]
+        createdAt = this[TournamentsTable.created_at],
+        updatedAt = this[TournamentsTable.updated_at]
     )
 
-    /**
-     * ✅ CORREGIDO: Crear torneo con TODOS los campos
-     * Antes faltaban: description, imageUrl, numberOfGroups, teamsPerGroup, teamsAdvancePerGroup
-     */
     override suspend fun create(tournament: Tournament): Tournament = dbQuery {
         TournamentsTable.insert {
             it[id] = tournament.id
-            it[organizerId] = tournament.organizerId
-            it[sportId] = tournament.sportId ?: throw IllegalArgumentException("Sport ID is required")
             it[name] = tournament.name
-            // ✅ AGREGADO: description (antes faltaba)
             it[description] = tournament.description
-            
+            it[sport_id] = tournament.sportId
             it[sport] = tournament.sport
-            it[sportSubType] = tournament.sportSubType
-            it[tournamentType] = tournament.tournamentType
+            it[sport_sub_type] = tournament.sportSubType
+            it[organizer_id] = tournament.organizerId
+            it[tournament_type] = tournament.tournamentType
             it[category] = tournament.category
-            
-            // ✅ CORREGIDO: Conversión de Enum a String
-            it[eliminationMode] = tournament.eliminationMode.toDbString()
-            
+            it[elimination_mode] = tournament.eliminationMode
             it[location] = tournament.location
-            it[startDate] = tournament.startDate
-            it[endDate] = tournament.endDate
-            it[registrationDeadline] = tournament.registrationDeadline
-            it[maxTeams] = tournament.maxTeams
-            it[currentTeams] = tournament.currentTeams
-            it[registrationFee] = tournament.registrationFee
-            it[prizePool] = tournament.prizePool
-            it[isPrivate] = tournament.isPrivate
-            it[requiresApproval] = tournament.requiresApproval
-            it[accessCode] = tournament.accessCode
-            it[hasGroupStage] = tournament.hasGroupStage
-            
-            // ✅ AGREGADO: Campos de configuración de grupos (antes faltaban)
-            it[numberOfGroups] = tournament.numberOfGroups
-            it[teamsPerGroup] = tournament.teamsPerGroup
-            it[teamsAdvancePerGroup] = tournament.teamsAdvancePerGroup
-            
-            it[sportSettings] = tournament.sportSettingsJson
-            it[allowTies] = tournament.allowTies
-            it[pointsForWin] = tournament.pointsForWin
-            it[pointsForDraw] = tournament.pointsForDraw
-            it[pointsForLoss] = tournament.pointsForLoss
-            it[rulesText] = tournament.rulesText
-            
-            // ✅ AGREGADO: imageUrl (antes faltaba)
-            it[imageUrl] = tournament.imageUrl
-            
+            it[start_date] = tournament.startDate
+            it[end_date] = tournament.endDate
+            it[registration_deadline] = tournament.registrationDeadline
+            it[max_teams] = tournament.maxTeams
+            it[current_teams] = tournament.currentTeams
+            it[registration_fee] = tournament.registrationFee
+            it[prize_pool] = tournament.prizePool
+            it[is_private] = tournament.isPrivate
+            it[requires_approval] = tournament.requiresApproval
+            it[access_code] = tournament.accessCode
+            it[has_group_stage] = tournament.hasGroupStage
+            it[number_of_groups] = tournament.numberOfGroups
+            it[teams_per_group] = tournament.teamsPerGroup
+            it[teams_advance_per_group] = tournament.teamsAdvancePerGroup
+            it[sport_settings] = tournament.sportSettingsJson
+            it[allow_ties] = tournament.allowTies
+            it[points_for_win] = tournament.pointsForWin
+            it[points_for_draw] = tournament.pointsForDraw
+            it[points_for_loss] = tournament.pointsForLoss
+            it[rules_text] = tournament.rulesText
+            it[image_url] = tournament.imageUrl
             it[status] = tournament.status
+            it[created_at] = tournament.createdAt
+            it[updated_at] = tournament.updatedAt
         }
         tournament
     }
@@ -123,64 +100,40 @@ class PostgresTournamentRepository : TournamentRepository {
 
     override suspend fun findAll(page: Int, pageSize: Int): List<Tournament> = dbQuery {
         TournamentsTable.selectAll()
-            .orderBy(TournamentsTable.createdAt to SortOrder.DESC)
+            .orderBy(TournamentsTable.created_at to SortOrder.DESC)
             .limit(pageSize, offset = ((page - 1) * pageSize).toLong())
             .map { it.toTournament() }
     }
 
-    /**
-     * ✅ CORREGIDO: UPDATE con TODOS los campos editables
-     * Antes solo actualizaba: name, status, currentTeams
-     */
     override suspend fun update(tournament: Tournament): Tournament? = dbQuery {
-        val rows = TournamentsTable.update({ TournamentsTable.id eq tournament.id }) {
-            // Básicos
+        val updatedRows = TournamentsTable.update({ TournamentsTable.id eq tournament.id }) {
             it[name] = tournament.name
             it[description] = tournament.description
             it[status] = tournament.status
-            
-            // Fechas
-            it[startDate] = tournament.startDate
-            it[endDate] = tournament.endDate
-            it[registrationDeadline] = tournament.registrationDeadline
-            
-            // Capacidad y Costos
-            it[maxTeams] = tournament.maxTeams
-            it[currentTeams] = tournament.currentTeams
-            it[registrationFee] = tournament.registrationFee
-            it[prizePool] = tournament.prizePool
-            
-            // Configuración
+            it[start_date] = tournament.startDate
+            it[end_date] = tournament.endDate
+            it[registration_deadline] = tournament.registrationDeadline
+            it[max_teams] = tournament.maxTeams
             it[location] = tournament.location
-            it[eliminationMode] = tournament.eliminationMode.toDbString()
+            it[elimination_mode] = tournament.eliminationMode
             it[category] = tournament.category
-            
-            // Privacidad
-            it[isPrivate] = tournament.isPrivate
-            it[requiresApproval] = tournament.requiresApproval
-            it[accessCode] = tournament.accessCode
-            
-            // Grupos
-            it[hasGroupStage] = tournament.hasGroupStage
-            it[numberOfGroups] = tournament.numberOfGroups
-            it[teamsPerGroup] = tournament.teamsPerGroup
-            it[teamsAdvancePerGroup] = tournament.teamsAdvancePerGroup
-            
-            // Reglas
-            it[allowTies] = tournament.allowTies
-            it[pointsForWin] = tournament.pointsForWin
-            it[pointsForDraw] = tournament.pointsForDraw
-            it[pointsForLoss] = tournament.pointsForLoss
-            
-            // Media
-            it[imageUrl] = tournament.imageUrl
-            it[rulesText] = tournament.rulesText
-            it[sportSettings] = tournament.sportSettingsJson
-            
-            // ✅ CRÍTICO: Actualizar timestamp de modificación
-            it[updatedAt] = Instant.now()
+            it[is_private] = tournament.isPrivate
+            it[requires_approval] = tournament.requiresApproval
+            it[access_code] = tournament.accessCode
+            it[has_group_stage] = tournament.hasGroupStage
+            it[number_of_groups] = tournament.numberOfGroups
+            it[teams_per_group] = tournament.teamsPerGroup
+            it[teams_advance_per_group] = tournament.teamsAdvancePerGroup
+            it[allow_ties] = tournament.allowTies
+            it[points_for_win] = tournament.pointsForWin
+            it[points_for_draw] = tournament.pointsForDraw
+            it[points_for_loss] = tournament.pointsForLoss
+            it[image_url] = tournament.imageUrl
+            it[rules_text] = tournament.rulesText
+            it[sport_settings] = tournament.sportSettingsJson
+            it[updated_at] = Instant.now()
         }
-        if (rows > 0) tournament else null
+        if (updatedRows > 0) findById(tournament.id) else null
     }
 
     override suspend fun delete(id: UUID): Boolean = dbQuery {
@@ -188,12 +141,10 @@ class PostgresTournamentRepository : TournamentRepository {
     }
 
     override suspend fun findByOrganizer(organizerId: UUID): List<Tournament> = dbQuery {
-        TournamentsTable.selectAll().where { TournamentsTable.organizerId eq organizerId }
+        TournamentsTable.selectAll().where { TournamentsTable.organizer_id eq organizerId }
             .map { it.toTournament() }
     }
 
-    // --- FOLLOWERS IMPLEMENTATION ---
-    
     override suspend fun addFollower(follower: TournamentFollower): Boolean = dbQuery {
         try {
             TournamentFollowersTable.insert {
@@ -203,14 +154,13 @@ class PostgresTournamentRepository : TournamentRepository {
             }
             true
         } catch (e: Exception) {
-            false // Probablemente llave duplicada
+            false
         }
     }
 
     override suspend fun removeFollower(userId: UUID, tournamentId: UUID): Boolean = dbQuery {
-        TournamentFollowersTable.deleteWhere { 
-            (TournamentFollowersTable.userId eq userId) and 
-            (TournamentFollowersTable.tournamentId eq tournamentId) 
+        TournamentFollowersTable.deleteWhere {
+            (TournamentFollowersTable.userId eq userId) and (TournamentFollowersTable.tournamentId eq tournamentId)
         } > 0
     }
 
@@ -220,9 +170,9 @@ class PostgresTournamentRepository : TournamentRepository {
     }
 
     override suspend fun isFollowing(userId: UUID, tournamentId: UUID): Boolean = dbQuery {
-        TournamentFollowersTable.selectAll()
-            .where { (TournamentFollowersTable.userId eq userId) and (TournamentFollowersTable.tournamentId eq tournamentId) }
-            .count() > 0
+        TournamentFollowersTable.selectAll().where {
+            (TournamentFollowersTable.userId eq userId) and (TournamentFollowersTable.tournamentId eq tournamentId)
+        }.count() > 0
     }
 
     override suspend fun findFollowedByUser(userId: UUID): List<Tournament> = dbQuery {
