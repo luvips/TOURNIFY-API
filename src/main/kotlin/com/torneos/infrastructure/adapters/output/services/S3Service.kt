@@ -52,7 +52,7 @@ class S3Service(config: ApplicationConfig) : FileStoragePort {
             }
 
             // Genera una URL firmada válida por 24 horas
-            val presignedRequest = s3.presignGetObject(request, duration = 1224.hours)
+            val presignedRequest = s3.presignGetObject(request, duration = 24.hours)
             return presignedRequest.url.toString()
         }
     }
