@@ -28,18 +28,16 @@ fun Team.toResponse(): TeamResponse {
         captainId = this.captainId?.toString()
     )
 }
-
 fun AddMemberRequest.toDomain(teamId: UUID): TeamMember {
     return TeamMember(
         teamId = teamId,
-        userId = null, // Se buscaría por email en el caso de uso si existe
-        memberName = this.name,
+        userId = null,
+        memberName = this.name, // Pasamos lo que venga (null o texto)
         memberEmail = this.email,
         memberPhone = null,
         role = this.role,
         jerseyNumber = this.jerseyNumber,
         position = this.position,
-                isActive = true
-
+        isActive = true
     )
 }
