@@ -50,6 +50,7 @@ dependencies {
     implementation("io.ktor:ktor-client-cio:$ktor_version")
 
     implementation("org.mindrot:jbcrypt:0.4")
+    implementation("io.ktor:ktor-server-status-pages:${ktor_version}")
 }
 
 tasks {

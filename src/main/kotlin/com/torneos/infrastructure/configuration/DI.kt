@@ -49,7 +49,7 @@ fun getAppModule(config: ApplicationConfig) = module {
     single { JoinTournamentUseCase(get(), get(), get()) }
     single { FollowTournamentUseCase(get()) }
     single { UnfollowTournamentUseCase(get()) }
-    
+    single { UpdateTournamentUseCase(get()) }
     // Teams
     single { CreateTeamUseCase(get()) }
     single { GetMyTeamsUseCase(get()) }
