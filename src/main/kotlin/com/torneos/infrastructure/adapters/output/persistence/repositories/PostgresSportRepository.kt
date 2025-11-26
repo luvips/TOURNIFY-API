@@ -53,7 +53,7 @@ class PostgresSportRepository : SportRepository {
     override suspend fun update(sport: Sport): Sport? = dbQuery {
         val rows = SportsTable.update({ SportsTable.id eq sport.id }) {
             it[name] = sport.name
-            it[category] = sport.category
+            it[category] = sport.category.name
             it[defaultPlayersPerTeam] = sport.defaultPlayersPerTeam
             it[defaultMatchDuration] = sport.defaultMatchDuration
             // No actualizamos 'icon' aquí si se maneja por separado, o agrégalo si quieres
