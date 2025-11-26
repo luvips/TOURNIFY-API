@@ -9,7 +9,7 @@ interface MatchRepository {
     suspend fun findById(id: UUID): Match?
     suspend fun findByTournament(tournamentId: UUID): List<Match>
     suspend fun findByGroup(groupId: UUID): List<Match>
-
+    suspend fun delete(id: UUID): Boolean
     suspend fun update(match: Match): Match?
 
     // Resultados detallados (Eventos)

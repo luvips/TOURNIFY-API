@@ -14,6 +14,7 @@ import java.util.UUID
 
 class PostgresMatchRepository : MatchRepository {
 
+
     private fun ResultRow.toMatch() = Match(
         id = this[MatchesTable.id],
         tournamentId = this[MatchesTable.tournamentId],
@@ -112,7 +113,9 @@ class PostgresMatchRepository : MatchRepository {
         notes = this[MatchResultsTable.notes],
         createdAt = this[MatchResultsTable.createdAt]
     )
-
+    override suspend fun delete(id: UUID): Boolean = dbQuery {
+        MatchesTable.deleteWhere { MatchesTable.id eq id } > 0
+    }
     // --- STANDINGS ---
      suspend fun getStandings(tournamentId: UUID): List<GroupStanding> = dbQuery {
         // En un caso real, haríamos un JOIN con TournamentGroups para filtrar por torneo

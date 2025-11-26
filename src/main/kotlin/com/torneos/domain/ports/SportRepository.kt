@@ -8,4 +8,6 @@ interface SportRepository {
     suspend fun findById(id: UUID): Sport?
     suspend fun create(sport: Sport): Sport
     suspend fun toggleActive(id: UUID, isActive: Boolean): Boolean
+    suspend fun update(sport: Sport): Sport?
+    suspend fun delete(id: UUID): Boolean
 }

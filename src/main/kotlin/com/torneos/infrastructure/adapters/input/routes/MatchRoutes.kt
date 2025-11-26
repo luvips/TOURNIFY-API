@@ -1,5 +1,6 @@
 package com.torneos.infrastructure.adapters.input.routes
 
+import com.torneos.application.usecases.matches.DeleteMatchUseCase
 import com.torneos.application.usecases.matches.GetMatchDetailsUseCase
 import com.torneos.application.usecases.matches.UpdateMatchResultUseCase
 import com.torneos.infrastructure.adapters.input.dtos.UpdateMatchResultRequest
@@ -18,7 +19,7 @@ fun Route.matchRoutes() {
     // Inyección de Casos de Uso
     val updateMatchResultUseCase by application.inject<UpdateMatchResultUseCase>()
     val getMatchDetailsUseCase by application.inject<GetMatchDetailsUseCase>()
-
+    val deleteMatchUseCase by application.inject<DeleteMatchUseCase>()
     route("/matches") {
 
         // 1. Ver detalle de un partido (Público)
@@ -58,6 +59,20 @@ fun Route.matchRoutes() {
                     call.respond(HttpStatusCode.BadRequest, mapOf("error" to (e.message ?: "Error desconocido")))
                 }
             }
+            delete("/{id}") {
+                val idParam = call.parameters["id"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
+
+                try {
+                    deleteMatchUseCase.execute(UUID.fromString(idParam))
+                    call.respond(HttpStatusCode.OK, mapOf("message" to "Partido eliminado correctamente"))
+                } catch (e: NoSuchElementException) {
+                    call.respond(HttpStatusCode.NotFound, mapOf("error" to "Partido no encontrado"))
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error al eliminar partido"))
+                }
+            }
         }
+
     }
 }

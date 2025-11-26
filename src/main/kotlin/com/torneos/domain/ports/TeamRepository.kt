@@ -12,6 +12,8 @@ interface TeamRepository {
     suspend fun findById(id: UUID): Team?
     suspend fun findByCaptain(captainId: UUID): List<Team>
     suspend fun update(team: Team): Team?
+    suspend fun delete(id: UUID): Boolean
+
 
     // Miembros del Equipo
     suspend fun addMember(member: TeamMember): TeamMember

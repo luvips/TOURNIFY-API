@@ -60,7 +60,9 @@ class PostgresTeamRepository : TeamRepository {
         }
         if (rows > 0) team else null
     }
-
+    override suspend fun delete(id: UUID): Boolean = dbQuery {
+        TeamsTable.deleteWhere { TeamsTable.id eq id } > 0
+    }
     // --- MEMBERS ---
     override suspend fun addMember(member: TeamMember): TeamMember = dbQuery {
         TeamMembersTable.insert {

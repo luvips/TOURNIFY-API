@@ -53,13 +53,18 @@ fun getAppModule(config: ApplicationConfig) = module {
     // Teams
     single { CreateTeamUseCase(get()) }
     single { GetMyTeamsUseCase(get()) }
-    single { AddMemberUseCase(get()) }
+    single { AddMemberUseCase(get(), get()) }
+    single { DeleteTeamUseCase(get()) }
+    single { RemoveMemberUseCase(get()) }
     
     // Sports
     single { GetSportsUseCase(get()) }
     single { CreateSportUseCase(get()) }
+    single { UpdateSportUseCase(get()) }
+    single { DeleteSportUseCase(get()) }
     
     // Matches
     single { UpdateMatchResultUseCase(get()) }
     single { GetMatchDetailsUseCase(get()) }
+    single { DeleteMatchUseCase(get()) }
 }

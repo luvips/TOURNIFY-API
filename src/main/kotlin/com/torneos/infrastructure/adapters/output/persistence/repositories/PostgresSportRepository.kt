@@ -6,6 +6,7 @@ import com.torneos.domain.ports.SportRepository
 import com.torneos.infrastructure.adapters.output.persistence.DatabaseFactory.dbQuery
 import com.torneos.infrastructure.adapters.output.persistence.tables.SportsTable
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import java.util.UUID
 
 class PostgresSportRepository : SportRepository {
@@ -48,5 +49,20 @@ class PostgresSportRepository : SportRepository {
         SportsTable.update({ SportsTable.id eq id }) {
             it[SportsTable.isActive] = isActive
         } > 0
+    }
+    override suspend fun update(sport: Sport): Sport? = dbQuery {
+        val rows = SportsTable.update({ SportsTable.id eq sport.id }) {
+            it[name] = sport.name
+            it[category] = sport.category
+            it[defaultPlayersPerTeam] = sport.defaultPlayersPerTeam
+            it[defaultMatchDuration] = sport.defaultMatchDuration
+            // No actualizamos 'icon' aquí si se maneja por separado, o agrégalo si quieres
+        }
+        if (rows > 0) sport else null
+    }
+
+    // 👇 IMPLEMENTAR DELETE
+    override suspend fun delete(id: UUID): Boolean = dbQuery {
+        SportsTable.deleteWhere { SportsTable.id eq id } > 0
     }
 }
