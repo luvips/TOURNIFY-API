@@ -9,54 +9,49 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Descargar el código
+      # ------------------------------------------------------------------
+      # FASE 1: PREPARACIÓN Y COMPILACIÓN
+      # ------------------------------------------------------------------
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Configurar Java 21
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
 
-      # 3. Permisos Gradlew
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # 4. Compilar
+      # Compila el proyecto generando el Fat JAR (ShadowJar)
       - name: Build with Gradle
         run: ./gradlew clean shadowJar
 
-      # 5. Debug: Listar archivos (Útil si algo falla)
-      - name: List files in build/libs
-        run: ls -la build/libs/
-
-      # 6. Preparar el JAR (Lógica corregida y ordenada)
+      # Busca el JAR generado y lo renombra a 'app.jar' para estandarizar
       - name: Prepare JAR
         run: |
-          # Intentamos encontrar el fat-jar (-all.jar) primero
+          # Intenta encontrar el jar que termina en -all.jar (típico de Ktor/Shadow)
           if ls build/libs/*-all.jar 1> /dev/null 2>&1; then
-            echo "Encontrado JAR versión -all"
             mv build/libs/*-all.jar app.jar
           else
-            echo "No se encontró -all.jar, moviendo cualquier .jar disponible"
+            # Si no, toma el primer jar que encuentre
             mv build/libs/*.jar app.jar
           fi
 
-      # 7. Verificación (Indentación arreglada)
-      - name: Verify app.jar exists
+      # Verifica que el JAR exista antes de intentar subirlo
+      - name: Verify Artifacts
         run: |
-          if [ -f "app.jar" ]; then
-            echo "✅ app.jar encontrado. Listo para subir."
-            ls -l app.jar
-          else
-            echo "❌ ERROR: app.jar NO existe en la raíz."
-            exit 1
-          fi
+          if [ ! -f "app.jar" ]; then echo "❌ app.jar no encontrado"; exit 1; fi
+          if [ ! -f "src/main/resources/application.conf" ]; then echo "❌ application.conf no encontrado"; exit 1; fi
+          echo "✅ Todos los archivos listos."
 
-      # 8. Pre-Deploy
-      - name: Stop Service (Pre-Deploy)
+      # ------------------------------------------------------------------
+      # FASE 2: DESPLIEGUE A ZONA SEGURA (/tmp)
+      # ------------------------------------------------------------------
+
+      # Primero detenemos el servicio para liberar memoria
+      - name: Stop Service
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -64,21 +59,42 @@ jobs:
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: sudo /opt/apps/backend/scripts/pre-deploy
 
-      # 9. Subir JAR
-      - name: Upload JAR via SCP
+      # Subimos los archivos a una carpeta temporal donde siempre tenemos permiso
+      - name: Upload to Tmp
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          source: "app.jar"
-          target: "/opt/apps/backend/"
-          strip_components: 3
-      # 10. Post-Deploy
-      - name: Start Service (Post-Deploy)
+          # Subimos el JAR y el archivo de configuración a la vez
+          source: "app.jar,src/main/resources/application.conf"
+          target: "/tmp/deploy"
+
+      # ------------------------------------------------------------------
+      # FASE 3: INSTALACIÓN Y ARRANQUE
+      # ------------------------------------------------------------------
+
+      # Movemos los archivos de /tmp a /opt/apps/backend y reiniciamos
+      - name: Deploy & Start
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          script: sudo /opt/apps/backend/scripts/post-deploy
+          script: |
+            # 1. Mover el JAR (Sobrescribir el anterior)
+            mv /tmp/deploy/app.jar /opt/apps/backend/app.jar
+            
+            # 2. Mover la Configuración (Aplanando la ruta)
+            # El SCP crea carpetas anidadas (src/main...), esto encuentra el archivo y lo mueve directo
+            find /tmp/deploy -name "application.conf" -exec mv {} /opt/apps/backend/application.conf \;
+            
+            # 3. Asegurar permisos (Usuario git_deploy debe ser el dueño)
+            sudo chown git_deploy:deployers /opt/apps/backend/app.jar
+            sudo chown git_deploy:deployers /opt/apps/backend/application.conf
+            
+            # 4. Limpiar basura temporal
+            rm -rf /tmp/deploy/*
+            
+            # 5. Arrancar el servicio
+            sudo /opt/apps/backend/scripts/post-deploy
