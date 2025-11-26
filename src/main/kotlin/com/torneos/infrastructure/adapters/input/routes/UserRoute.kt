@@ -2,7 +2,10 @@ package com.torneos.infrastructure.adapters.input.routes
 
 import com.torneos.application.usecases.users.GetUserProfileUseCase
 import com.torneos.application.usecases.users.UpdateUserProfileUseCase
+import com.torneos.application.usecases.users.SwitchUserRoleUseCase
 import com.torneos.infrastructure.adapters.input.dtos.UpdateProfileRequest
+import com.torneos.infrastructure.adapters.input.dtos.SwitchRoleRequest
+import com.torneos.infrastructure.adapters.input.dtos.AuthResponse
 import com.torneos.infrastructure.adapters.input.mappers.toDto
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -17,6 +20,7 @@ import java.util.UUID
 fun Route.userRoutes() {
     val getUserProfileUseCase by application.inject<GetUserProfileUseCase>()
     val updateUserProfileUseCase by application.inject<UpdateUserProfileUseCase>()
+    val switchUserRoleUseCase by application.inject<SwitchUserRoleUseCase>()
 
     route("/users") {
         authenticate("auth-jwt") {
@@ -53,9 +57,29 @@ fun Route.userRoutes() {
                     call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Error al actualizar"))
                 }
             }
+
+            // 3. Cambiar de rol
+            post("/me/switch-role") {
+                val principal = call.principal<JWTPrincipal>()
+                val userId = UUID.fromString(principal?.payload?.getClaim("id")?.asString())
+
+                try {
+                    val request = call.receive<SwitchRoleRequest>()
+                    val (newToken, updatedUser) = switchUserRoleUseCase.execute(userId, request.role)
+                    
+                    call.respond(HttpStatusCode.OK, AuthResponse(
+                        token = newToken,
+                        user = updatedUser.toDto()
+                    ))
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.message))
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error al cambiar rol"))
+                }
+            }
             
 
-            // 3. Subir Avatar (Placeholder para S3)
+            // 4. Subir Avatar (Placeholder para S3)
             post("/me/avatar") {
                 // Aquí iría la lógica de Multipart para subir imagen a S3Service
                 call.respond(HttpStatusCode.OK, mapOf("message" to "Avatar actualizado (Simulado)"))
