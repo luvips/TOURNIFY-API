@@ -18,21 +18,21 @@ import java.time.format.DateTimeParseException
 import java.util.UUID
 
 fun Route.tournamentRoutes() {
+    // Inyección de dependencias
     val createTournamentUseCase by application.inject<CreateTournamentUseCase>()
     val getTournamentsUseCase by application.inject<GetTournamentsUseCase>()
     val getTournamentDetailsUseCase by application.inject<GetTournamentDetailsUseCase>()
-    val getTournamentStandingsUseCase by application.inject<GetTournamentStandingsUseCase>()
-    val getTournamentMatchesUseCase by application.inject<GetTournamentMatchesUseCase>()
-    val getTournamentTeamsUseCase by application.inject<GetTournamentTeamsUseCase>()
+    val updateTournamentUseCase by application.inject<UpdateTournamentUseCase>()
+    val deleteTournamentUseCase by application.inject<DeleteTournamentUseCase>()
     val joinTournamentUseCase by application.inject<JoinTournamentUseCase>()
     val followTournamentUseCase by application.inject<FollowTournamentUseCase>()
     val unfollowTournamentUseCase by application.inject<UnfollowTournamentUseCase>()
-    val deleteTournamentUseCase by application.inject<DeleteTournamentUseCase>()
-    val updateTournamentUseCase by application.inject<UpdateTournamentUseCase>()
+
+    // (Otros use cases como standings/matches/teams se pueden inyectar si se usan)
 
     route("/tournaments") {
 
-        // RUTAS PÚBLICAS
+        // 1. Listar Torneos (Público)
         get {
             try {
                 val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
@@ -44,6 +44,7 @@ fun Route.tournamentRoutes() {
             }
         }
 
+        // 2. Ver Detalle (Público)
         get("/{id}") {
             val idParam = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
             try {
@@ -54,15 +55,18 @@ fun Route.tournamentRoutes() {
             }
         }
 
-        // RUTAS PROTEGIDAS
         authenticate("auth-jwt") {
+
+            // 3. Crear Torneo
             post {
-                val principal = call.principal<JWTPrincipal>()
-                val userIdStr = principal?.payload?.getClaim("id")?.asString()
-                val userRole = principal?.payload?.getClaim("role")?.asString()
+                val userIdStr = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
+                val userRole = call.principal<JWTPrincipal>()?.payload?.getClaim("role")?.asString()
 
                 if (userIdStr == null) return@post call.respond(HttpStatusCode.Unauthorized)
-                if (userRole !in listOf("organizer", "admin")) return@post call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Acceso denegado."))
+
+                if (userRole !in listOf("organizer", "admin")) {
+                    return@post call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Rol no autorizado"))
+                }
 
                 try {
                     val request = call.receive<CreateTournamentRequest>()
@@ -70,86 +74,112 @@ fun Route.tournamentRoutes() {
                     val created = createTournamentUseCase.execute(domainTournament)
                     call.respond(HttpStatusCode.Created, created.toResponse())
                 } catch (e: Exception) {
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.message))
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to (e.message ?: "Error al crear")))
                 }
             }
 
+            // 4. Editar Torneo (PUT)
             put("/{id}") {
                 val tournamentIdStr = call.parameters["id"]
                 val userIdStr = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
-                if (tournamentIdStr == null || userIdStr == null) return@put call.respond(HttpStatusCode.BadRequest)
+
+                if (tournamentIdStr == null || userIdStr == null) {
+                    return@put call.respond(HttpStatusCode.BadRequest)
+                }
 
                 try {
                     val request = call.receive<CreateTournamentRequest>()
+                    // Convertimos a dominio usando el ID del usuario actual como organizer temporalmente
                     val domainTournament = request.toDomain(organizerId = UUID.fromString(userIdStr))
-                    val updated = updateTournamentUseCase.execute(UUID.fromString(tournamentIdStr), domainTournament, UUID.fromString(userIdStr))
+
+                    val updated = updateTournamentUseCase.execute(
+                        id = UUID.fromString(tournamentIdStr),
+                        tournament = domainTournament,
+                        requesterId = UUID.fromString(userIdStr)
+                    )
                     call.respond(HttpStatusCode.OK, updated.toResponse())
+                } catch (e: SecurityException) {
+                    call.respond(HttpStatusCode.Forbidden, mapOf("error" to e.message))
+                } catch (e: NoSuchElementException) {
+                    call.respond(HttpStatusCode.NotFound, mapOf("error" to e.message))
                 } catch (e: Exception) {
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.message))
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to (e.message ?: "Error al actualizar")))
                 }
             }
 
+            // 5. Eliminar Torneo (DELETE)
             delete("/{id}") {
-                val id = call.parameters["id"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
-                val userId = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString() ?: return@delete call.respond(HttpStatusCode.Unauthorized)
+                val tournamentIdStr = call.parameters["id"]
+                val userIdStr = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
+
+                if (tournamentIdStr == null || userIdStr == null) {
+                    return@delete call.respond(HttpStatusCode.BadRequest)
+                }
 
                 try {
-                    deleteTournamentUseCase.execute(UUID.fromString(id), UUID.fromString(userId))
-                    call.respond(HttpStatusCode.OK, mapOf("message" to "Torneo eliminado"))
+                    deleteTournamentUseCase.execute(
+                        id = UUID.fromString(tournamentIdStr),
+                        requesterId = UUID.fromString(userIdStr)
+                    )
+                    call.respond(HttpStatusCode.OK, mapOf("message" to "Torneo eliminado correctamente"))
+                } catch (e: SecurityException) {
+                    call.respond(HttpStatusCode.Forbidden, mapOf("error" to e.message))
+                } catch (e: NoSuchElementException) {
+                    call.respond(HttpStatusCode.NotFound, mapOf("error" to e.message))
                 } catch (e: Exception) {
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.message))
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("error" to (e.message ?: "Error al eliminar")))
                 }
             }
 
+            // 6. Unirse a Torneo (Join)
             post("/{id}/join") {
                 val userIdStr = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
                 val tournamentIdStr = call.parameters["id"]
-                if (userIdStr == null || tournamentIdStr == null) return@post call.respond(HttpStatusCode.BadRequest)
+                if (userIdStr == null || tournamentIdStr == null) {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@post
+                }
 
                 try {
                     val request = call.receive<JoinTournamentRequest>()
-                    joinTournamentUseCase.execute(UUID.fromString(userIdStr), UUID.fromString(tournamentIdStr), UUID.fromString(request.teamId))
+                    joinTournamentUseCase.execute(
+                        userId = UUID.fromString(userIdStr),
+                        tournamentId = UUID.fromString(tournamentIdStr),
+                        teamId = UUID.fromString(request.teamId)
+                    )
                     call.respond(HttpStatusCode.OK, mapOf("message" to "Inscripción enviada"))
                 } catch (e: Exception) {
-                    call.respond(HttpStatusCode.Conflict, mapOf("error" to e.message))
+                    call.respond(HttpStatusCode.Conflict, mapOf("error" to (e.message ?: "Error")))
                 }
             }
 
+            // 7. Seguir Torneo (Follow)
             post("/{id}/follow") {
                 val userIdStr = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
                 val tournamentIdStr = call.parameters["id"]
-                
-                if (userIdStr == null || tournamentIdStr == null) {
-                    return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Token o ID inválido"))
-                }
+
+                if (userIdStr == null || tournamentIdStr == null) return@post call.respond(HttpStatusCode.BadRequest)
 
                 try {
-                    followTournamentUseCase.execute(
-                        userId = UUID.fromString(userIdStr), 
-                        tournamentId = UUID.fromString(tournamentIdStr)
-                    )
+                    followTournamentUseCase.execute(UUID.fromString(userIdStr), UUID.fromString(tournamentIdStr))
                     call.respond(HttpStatusCode.OK, mapOf("message" to "Ahora sigues este torneo"))
                 } catch (e: Exception) {
-                    call.respond(HttpStatusCode.Conflict, mapOf("error" to "Ya seguías este torneo o hubo un error."))
+                    call.respond(HttpStatusCode.Conflict, mapOf("error" to (e.message ?: "Error al seguir")))
                 }
             }
 
+            // 8. Dejar de Seguir (Unfollow)
             delete("/{id}/follow") {
                 val userIdStr = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
                 val tournamentIdStr = call.parameters["id"]
-                
-                if (userIdStr == null || tournamentIdStr == null) {
-                    return@delete call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Token o ID inválido"))
-                }
+
+                if (userIdStr == null || tournamentIdStr == null) return@delete call.respond(HttpStatusCode.BadRequest)
 
                 try {
-                    unfollowTournamentUseCase.execute(
-                        userId = UUID.fromString(userIdStr), 
-                        tournamentId = UUID.fromString(tournamentIdStr)
-                    )
+                    unfollowTournamentUseCase.execute(UUID.fromString(userIdStr), UUID.fromString(tournamentIdStr))
                     call.respond(HttpStatusCode.OK, mapOf("message" to "Dejaste de seguir este torneo"))
                 } catch (e: Exception) {
-                    call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error al dejar de seguir.", "details" to e.message))
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to (e.message ?: "Error al dejar de seguir")))
                 }
             }
         }
