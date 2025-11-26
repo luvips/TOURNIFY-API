@@ -36,9 +36,10 @@ fun getAppModule(config: ApplicationConfig) = module {
     single { RegisterUserUseCase(get(), get()) }
     
     // Users
-    single { GetUserProfileUseCase(get()) }
+    single { GetUserProfileUseCase(get(), get()) }
     single { UpdateUserProfileUseCase(get()) }
-    
+    single { UpdateUserAvatarUseCase(get(), get())}
+
     // Tournaments
     single { CreateTournamentUseCase(get(), get()) }
     single { GetTournamentsUseCase(get()) }

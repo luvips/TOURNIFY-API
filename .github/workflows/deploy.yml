@@ -30,8 +30,8 @@ jobs:
 
     # 5. Preparar el artefacto (Renombrar para facilitar el SCP)
     - name: Prepare JAR
-      run: mv build/libs/*.jar app.jar
-
+      run: |
+      
 
     # 6. Pre-Deploy: Detiene el servicio y limpia JARs viejos
     - name: Stop Service (Pre-Deploy)
