@@ -62,7 +62,7 @@ tasks {
         archiveVersion.set("")
 
         isZip64 = true
-
+        exclude("application.conf")
         mergeServiceFiles()
     }
 }
