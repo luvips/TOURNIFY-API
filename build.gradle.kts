@@ -52,6 +52,8 @@ dependencies {
     implementation("org.mindrot:jbcrypt:0.4")
     implementation("io.ktor:ktor-server-status-pages:${ktor_version}")
     implementation("io.ktor:ktor-server-cors:${ktor_version}")
+
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.0")
 }
 
 tasks {

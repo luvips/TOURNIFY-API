@@ -56,86 +56,58 @@ class PostgresStandingRepository : StandingRepository {
 
     override suspend fun updateStandings(groupId: UUID): Boolean = dbQuery {
         try {
-            // 1. Obtener todos los partidos FINALIZADOS del grupo
-            val matches = MatchesTable.selectAll()
+            // 1. Obtener partidos finalizados
+            val matches = com.torneos.infrastructure.adapters.output.persistence.tables.MatchesTable.selectAll()
                 .where {
-                    (MatchesTable.groupId eq groupId) and
-                            (MatchesTable.status eq MatchStatus.finished)
-                }
-                .map { row ->
-                    Triple(
-                        row[MatchesTable.teamHomeId],
-                        row[MatchesTable.teamAwayId],
-                        Pair(row[MatchesTable.scoreHome] ?: 0, row[MatchesTable.scoreAway] ?: 0)
-                    )
+                    (com.torneos.infrastructure.adapters.output.persistence.tables.MatchesTable.groupId eq groupId) and
+                            (com.torneos.infrastructure.adapters.output.persistence.tables.MatchesTable.status eq com.torneos.domain.enums.MatchStatus.finished)
                 }
 
-            // 2. Mapa para acumular estadísticas por equipo
-            val statsMap = mutableMapOf<UUID, TeamStats>()
+            // 2. Estructura para sumar puntos en memoria
+            data class Stats(var pts: Int = 0, var gf: Int = 0, var ga: Int = 0, var w: Int = 0, var d: Int = 0, var l: Int = 0, var p: Int = 0)
+            val teamStats = mutableMapOf<UUID, Stats>()
 
-            // 3. Procesar cada partido y sumar puntos
-            matches.forEach { (homeId, awayId, scores) ->
-                val (scoreHome, scoreAway) = scores
+            // 3. Iterar partidos y sumar
+            matches.forEach { row ->
+                val home = row[com.torneos.infrastructure.adapters.output.persistence.tables.MatchesTable.teamHomeId]
+                val away = row[com.torneos.infrastructure.adapters.output.persistence.tables.MatchesTable.teamAwayId]
+                val sHome = row[com.torneos.infrastructure.adapters.output.persistence.tables.MatchesTable.scoreHome] ?: 0
+                val sAway = row[com.torneos.infrastructure.adapters.output.persistence.tables.MatchesTable.scoreAway] ?: 0
 
-                if (homeId != null && awayId != null) {
-                    val homeStats = statsMap.getOrPut(homeId) { TeamStats() }
-                    val awayStats = statsMap.getOrPut(awayId) { TeamStats() }
+                if (home != null && away != null) {
+                    val th = teamStats.getOrPut(home) { Stats() }
+                    val ta = teamStats.getOrPut(away) { Stats() }
 
-                    // Partidos Jugados
-                    homeStats.played++
-                    awayStats.played++
+                    th.p++; ta.p++
+                    th.gf += sHome; th.ga += sAway
+                    ta.gf += sAway; ta.ga += sHome
 
-                    // Goles
-                    homeStats.gf += scoreHome
-                    homeStats.ga += scoreAway
-                    awayStats.gf += scoreAway
-                    awayStats.ga += scoreHome
-
-                    // Resultados (Victorias, Empates, Derrotas)
                     when {
-                        scoreHome > scoreAway -> {
-                            homeStats.won++
-                            homeStats.pts += 3
-                            awayStats.lost++
-                        }
-                        scoreAway > scoreHome -> {
-                            awayStats.won++
-                            awayStats.pts += 3
-                            homeStats.lost++
-                        }
-                        else -> {
-                            homeStats.drawn++
-                            homeStats.pts += 1
-                            awayStats.drawn++
-                            awayStats.pts += 1
-                        }
+                        sHome > sAway -> { th.pts += 3; th.w++; ta.l++ }
+                        sAway > sHome -> { ta.pts += 3; ta.w++; th.l++ }
+                        else -> { th.pts += 1; th.d++; ta.pts += 1; ta.d++ }
                     }
                 }
             }
 
-            // 4. Actualizar la base de datos
-            // Primero eliminamos los registros actuales del grupo para re-insertarlos limpios
+            // 4. Borrar tabla actual e insertar nuevos valores
             GroupStandingsTable.deleteWhere { GroupStandingsTable.groupId eq groupId }
 
-            // Insertamos las nuevas estadísticas calculadas
-            statsMap.forEach { (teamId, stat) ->
+            teamStats.forEach { (tId, s) ->
                 GroupStandingsTable.insert {
                     it[id] = UUID.randomUUID()
-                    it[this.groupId] = groupId
-                    it[this.teamId] = teamId
-                    it[played] = stat.played
-                    it[won] = stat.won
-                    it[drawn] = stat.drawn
-                    it[lost] = stat.lost
-                    it[goalsFor] = stat.gf
-                    it[goalsAgainst] = stat.ga
-                    it[goalDifference] = stat.gf - stat.ga
-                    it[points] = stat.pts
-                    // La posición se calculará al hacer el GET con orderBy
-                    it[position] = null
+                    it[GroupStandingsTable.groupId] = groupId
+                    it[teamId] = tId
+                    it[played] = s.p
+                    it[won] = s.w
+                    it[drawn] = s.d
+                    it[lost] = s.l
+                    it[goalsFor] = s.gf
+                    it[goalsAgainst] = s.ga
+                    it[goalDifference] = s.gf - s.ga
+                    it[points] = s.pts
                 }
             }
-
             true
         } catch (e: Exception) {
             e.printStackTrace()
