@@ -12,21 +12,7 @@ import kotlin.math.ceil
 import kotlin.math.log2
 import kotlin.math.pow
 
-/**
- * Caso de Uso: Generar Bracket de Eliminación
- * 
- * Genera automáticamente todos los partidos para un torneo de eliminación.
- * Soporta:
- * - Eliminación simple (single elimination)
- * - Eliminación doble (double elimination) - Pendiente implementación completa
- * 
- * Algoritmo:
- * 1. Obtiene equipos registrados y aprobados
- * 2. Calcula el número de rondas necesarias (potencia de 2)
- * 3. Genera bye matches si es necesario
- * 4. Crea los emparejamientos iniciales
- * 5. Crea los slots para rondas siguientes (TBD vs TBD)
- */
+
 class GenerateBracketUseCase(
     private val matchRepository: MatchRepository,
     private val tournamentRepository: TournamentRepository,
@@ -91,7 +77,7 @@ class GenerateBracketUseCase(
         // Calcular número de rondas (log2 redondeado hacia arriba)
         val numRounds = ceil(log2(numTeams.toDouble())).toInt()
         
-        // Calcular número total de equipos en bracket perfecto (siguiente potencia de 2)
+        // Calcular número total de equipos en bracket perfecto
         val bracketSize = 2.0.pow(numRounds).toInt()
         
         // Número de byes necesarios
@@ -100,9 +86,8 @@ class GenerateBracketUseCase(
         val matches = mutableListOf<Match>()
         var matchNumber = 1
         
-        // --- RONDA 1: Crear partidos iniciales ---
         val roundName = getRoundName(numRounds, 1)
-        val teamsShuffled = teams.shuffled() // Opcional: barajar equipos
+        val teamsShuffled = teams.shuffled()
         
         var teamIndex = 0
         val numFirstRoundMatches = bracketSize / 2
@@ -111,7 +96,7 @@ class GenerateBracketUseCase(
             val teamHome = if (teamIndex < numTeams) teamsShuffled[teamIndex++] else null
             val teamAway = if (teamIndex < numTeams) teamsShuffled[teamIndex++] else null
             
-            // Si uno de los equipos es null, es un bye (el otro pasa automáticamente)
+            // Si uno de los equipos es null, es un bye
             val status = if (teamHome == null || teamAway == null) {
                 MatchStatus.finished // Bye automático
             } else {
@@ -152,7 +137,6 @@ class GenerateBracketUseCase(
             matches.add(matchRepository.create(match))
         }
         
-        // --- RONDAS SIGUIENTES: Crear slots vacíos (TBD vs TBD) ---
         for (round in 2..numRounds) {
             val roundName = getRoundName(numRounds, round)
             val numMatchesInRound = 2.0.pow(numRounds - round).toInt()
@@ -165,8 +149,8 @@ class GenerateBracketUseCase(
                     matchNumber = matchNumber++,
                     roundName = roundName,
                     roundNumber = round,
-                    teamHomeId = null, // TBD - Se llenará cuando termine el partido anterior
-                    teamAwayId = null, // TBD
+                    teamHomeId = null,
+                    teamAwayId = null,
                     scheduledDate = null,
                     location = null,
                     refereeId = null,
@@ -188,27 +172,17 @@ class GenerateBracketUseCase(
         
         return matches
     }
-    
-    /**
-     * Genera bracket de doble eliminación (Winners + Losers bracket)
-     * TODO: Implementación completa pendiente
-     */
+
     private suspend fun generateDoubleEliminationBracket(
         tournamentId: UUID,
         registrations: List<TeamRegistration>,
         startDate: Instant?
     ): List<Match> {
-        // Por ahora, genera un bracket simple
-        // La implementación completa requiere:
-        // 1. Winners Bracket
-        // 2. Losers Bracket (el doble de rondas - 1)
-        // 3. Gran Final (Winner vs Loser winner)
+
         return generateSingleEliminationBracket(tournamentId, registrations, startDate)
     }
     
-    /**
-     * Obtiene el nombre de la ronda según su número
-     */
+
     private fun getRoundName(totalRounds: Int, currentRound: Int): String {
         return when (totalRounds - currentRound) {
             0 -> "Final"

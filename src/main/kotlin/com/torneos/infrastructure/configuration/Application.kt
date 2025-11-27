@@ -11,16 +11,13 @@ import org.koin.ktor.plugin.Koin
 fun main(args: Array<String>): Unit = EngineMain.main(args)
 
 fun Application.module() {
-    // 1. Koin
     install(Koin) {
         modules(getAppModule(environment.config))
     }
 
-    // 2. 🔥 STATUS PAGES (EL DETECTOR DE ERRORES) 🔥
     install(StatusPages) {
         exception<Throwable> { call, cause ->
-            // Esto imprimirá el error ROJO en tu consola cuando falle el JSON
-            println("🚨 ERROR 400 ATRAPADO: ${cause.message}")
+            println(" ERROR 400 : ${cause.message}")
             cause.printStackTrace()
 
             call.respond(HttpStatusCode.BadRequest, mapOf(
@@ -30,7 +27,6 @@ fun Application.module() {
         }
     }
 
-    // 3. Resto de configuraciones
 
     configureSerialization()
     configureSecurity()

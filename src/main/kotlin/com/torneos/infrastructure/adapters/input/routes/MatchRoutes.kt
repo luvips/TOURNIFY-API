@@ -30,7 +30,7 @@ fun Route.matchRoutes() {
     
     route("/matches") {
 
-        // 1. Ver detalle de un partido (Público)
+        // 1. Ver detalle de un partido
         get("/{id}") {
             val idParam = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
             try {
@@ -43,19 +43,15 @@ fun Route.matchRoutes() {
 
         authenticate("auth-jwt") {
             
-            // 2. Crear Partido Manual (Protegido: Organizador)
+            // 2. Crear Partido Manual
             post {
                 val userId = UUID.fromString(call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString())
                 
                 try {
                     val request = call.receive<CreateMatchRequest>()
                     
-                    // Parsear fecha si se proporciona
                     val scheduledDate = request.scheduledDate?.let { Instant.parse(it) }
-                    
-                    // El tournamentId debe venir en el request o extraerse del contexto
-                    // Para simplificar, asumimos que viene en el body
-                    // En producción, podría ser POST /tournaments/{id}/matches
+
                     
                     val match = createMatchUseCase.execute(
                         userId = userId,
@@ -81,7 +77,7 @@ fun Route.matchRoutes() {
                 }
             }
             
-            // 3. Actualizar Resultado (Protegido: Árbitro/Admin)
+            // 3. Actualizar Resultado
             put("/{id}/result") {
                 val matchIdParam = call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
                 val userId = UUID.fromString(call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString())
@@ -89,10 +85,9 @@ fun Route.matchRoutes() {
                 try {
                     val request = call.receive<UpdateMatchResultRequest>()
 
-                    // Ejecutar lógica de negocio (validar que el usuario sea el referee o admin)
                     val updatedMatch = updateMatchResultUseCase.execute(
                         matchId = UUID.fromString(matchIdParam),
-                        userId = userId, // Para validar permisos
+                        userId = userId,
                         scoreHome = request.scoreHome,
                         scoreAway = request.scoreAway,
                         status = request.status,
@@ -107,7 +102,7 @@ fun Route.matchRoutes() {
                 }
             }
             
-            // 4. Eliminar Partido (Protegido: Organizador/Admin)
+            // 4. Eliminar Partido
             delete("/{id}") {
                 val idParam = call.parameters["id"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
 
@@ -125,11 +120,7 @@ fun Route.matchRoutes() {
     }
 }
 
-/**
- * Rutas específicas de torneos para matches
- * POST /tournaments/{id}/generate-bracket - Generar bracket automático
- * POST /tournaments/{id}/matches - Crear partido en un torneo
- */
+
 fun Route.tournamentMatchRoutes() {
     val generateBracketUseCase by application.inject<GenerateBracketUseCase>()
     val createMatchUseCase by application.inject<CreateMatchUseCase>()

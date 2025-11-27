@@ -11,7 +11,6 @@ import java.util.UUID
 
 class PostgresUserRepository : UserRepository {
 
-    // Helper para convertir fila de BD a Modelo de Dominio
     private fun ResultRow.toUser() = User(
         id = this[UsersTable.id],
         username = this[UsersTable.username],
@@ -63,8 +62,8 @@ class PostgresUserRepository : UserRepository {
             it[phone] = user.phone
             it[avatarUrl] = user.avatarUrl
             it[isActive] = user.isActive
-            it[passwordHash] = user.passwordHash // Permitir actualizar contraseña
-            it[role] = user.role.name // Permitir actualizar rol
+            it[passwordHash] = user.passwordHash
+            it[role] = user.role.name
         }
         if (updatedRows > 0) user else null
     }

@@ -24,7 +24,6 @@ class UpdateMatchResultUseCase(
         val match = matchRepository.findById(matchId)
             ?: throw NoSuchElementException("Partido no encontrado")
 
-        // Aquí podrías validar si userId es el árbitro del partido
 
         val updatedMatch = match.copy(
             scoreHome = scoreHome,

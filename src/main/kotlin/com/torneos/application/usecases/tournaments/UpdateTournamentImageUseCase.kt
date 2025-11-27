@@ -18,7 +18,7 @@ class UpdateTournamentImageUseCase(
             throw SecurityException("Solo el organizador puede actualizar la imagen del torneo")
         }
 
-        // 3. Subir archivo a S3 (Usa tu S3Service ya configurado con IAM Role)
+        // 3. Subir archivo a S3
         val objectKey = fileStorage.uploadFile(fileName, fileBytes, contentType)
 
         // 4. Actualizar el torneo con la nueva Key

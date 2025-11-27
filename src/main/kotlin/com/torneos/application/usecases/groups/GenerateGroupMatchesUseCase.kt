@@ -41,7 +41,7 @@ class GenerateGroupMatchesUseCase(
                     matchNumber = null,
                     roundName = "Fase de Grupos",
                     roundNumber = 1,
-                    scheduledDate = null, // Fecha por definir
+                    scheduledDate = null,
                     location = null,
                     refereeId = null,
                     status = MatchStatus.scheduled,

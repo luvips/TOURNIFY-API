@@ -23,16 +23,15 @@ fun Route.sportRoutes() {
     val deleteSportUseCase by application.inject<DeleteSportUseCase>()
 
     route("/sports") {
-        // Público: Listar deportes
+        //  Listar deportes
         get {
             val sports = getSportsUseCase.execute()
             call.respond(HttpStatusCode.OK, sports.map { it.toResponse() })
         }
 
-        // Admin: Crear deporte
+        //  Crear deporte
         authenticate("auth-jwt") {
             post {
-                // TODO: Verificar rol ADMIN
                 val request = call.receive<CreateSportRequest>()
                 val sport = createSportUseCase.execute(request.toDomain())
                 call.respond(HttpStatusCode.Created, sport.toResponse())
@@ -41,12 +40,11 @@ fun Route.sportRoutes() {
                 val idStr = call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
 
                 try {
-                    // Reutilizamos CreateSportRequest para simplificar, o crea un UpdateSportRequest
                     val request = call.receive<CreateSportRequest>()
 
                     val updatedSport = updateSportUseCase.execute(
                         UUID.fromString(idStr),
-                        request.toDomain() // Convierte el JSON a modelo Sport
+                        request.toDomain()
                     )
 
                     call.respond(HttpStatusCode.OK, updatedSport.toResponse())
@@ -57,7 +55,7 @@ fun Route.sportRoutes() {
                 }
             }
 
-            // 👇 ELIMINAR DEPORTE
+            //  ELIMINAR DEPORTE
             delete("/{id}") {
                 val idStr = call.parameters["id"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
 

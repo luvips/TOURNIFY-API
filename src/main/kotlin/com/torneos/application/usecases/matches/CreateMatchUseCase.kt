@@ -8,16 +8,7 @@ import com.torneos.domain.ports.TeamRepository
 import java.time.Instant
 import java.util.UUID
 
-/**
- * Caso de Uso: Crear un partido manualmente
- * 
- * Permite a los organizadores crear partidos de forma manual.
- * Valida que:
- * - El torneo exista
- * - El usuario sea el organizador del torneo
- * - Los equipos existan (si se especifican)
- * - Los equipos estén registrados en el torneo
- */
+
 class CreateMatchUseCase(
     private val matchRepository: MatchRepository,
     private val tournamentRepository: TournamentRepository,
@@ -45,7 +36,7 @@ class CreateMatchUseCase(
             throw SecurityException("Solo el organizador puede crear partidos")
         }
         
-        // 3. Validar equipos (si se especifican)
+        // 3. Validar equipos
         if (teamHomeId != null) {
             val homeTeam = teamRepository.findById(teamHomeId)
                 ?: throw IllegalArgumentException("Equipo local no encontrado")

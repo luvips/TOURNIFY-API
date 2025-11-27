@@ -5,13 +5,11 @@ import com.torneos.application.usecases.tournaments.MatchWithTeamNames
 import com.torneos.infrastructure.adapters.input.dtos.MatchResponse
 
 fun Match.toResponse(): MatchResponse {
-    // Nota: El modelo Match de dominio solo tiene IDs de equipos.
-    // Para mostrar nombres reales, idealmente el UseCase debería devolver un modelo enriquecido.
-    // Por ahora devolvemos los IDs o nulos para que compile y funcione.
+
     return MatchResponse(
         id = this.id.toString(),
-        homeTeamName = this.teamHomeId?.toString() ?: "TBD", // O "Equipo A"
-        awayTeamName = this.teamAwayId?.toString() ?: "TBD", // O "Equipo B"
+        homeTeamName = this.teamHomeId?.toString() ?: "TBD",
+        awayTeamName = this.teamAwayId?.toString() ?: "TBD",
         scoreHome = this.scoreHome,
         scoreAway = this.scoreAway,
         status = this.status,

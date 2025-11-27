@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 data class RegisterRequest(
     val username: String,
     val email: String,
-    val password: String, // El backend lo hasheará
+    val password: String,
     val firstName: String,
     val lastName: String,
     val role: UserRole = UserRole.player

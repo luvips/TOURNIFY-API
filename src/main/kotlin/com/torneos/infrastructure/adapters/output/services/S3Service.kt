@@ -17,12 +17,10 @@ class S3Service(config: ApplicationConfig) : FileStoragePort {
     private val logger = LoggerFactory.getLogger(S3Service::class.java)
     private val bucketName = config.property("aws.bucketName").getString()
     private val region = config.property("aws.region").getString()
-    // Se eliminaron accessKey y secretKey explícitos
 
     override suspend fun uploadFile(fileName: String, fileBytes: ByteArray, contentType: String): String {
         val uniqueKey = "${UUID.randomUUID()}-${fileName.replace(" ", "_")}"
 
-        // S3Client.fromEnvironment detectará automáticamente las credenciales (ej. Rol IAM)
         S3Client.fromEnvironment {
             this.region = this@S3Service.region
         }.use { s3 ->
@@ -51,7 +49,6 @@ class S3Service(config: ApplicationConfig) : FileStoragePort {
                 key = objectKey
             }
 
-            // Genera una URL firmada válida por 24 horas
             val presignedRequest = s3.presignGetObject(request, duration = 24.hours)
             return presignedRequest.url.toString()
         }

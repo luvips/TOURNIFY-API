@@ -23,7 +23,7 @@ class GenerateGroupsUseCase(
         if (existingGroups.isNotEmpty()) return existingGroups
 
         val newGroups = mutableListOf<TournamentGroup>()
-        val groupNames = generateGroupNames(numGroups) // ["A", "B", "C"...]
+        val groupNames = generateGroupNames(numGroups)
 
         groupNames.forEachIndexed { index, name ->
             val group = TournamentGroup(
@@ -40,7 +40,6 @@ class GenerateGroupsUseCase(
 
     private fun generateGroupNames(count: Int): List<String> {
         return (0 until count).map { index ->
-            // Genera A, B, ... Z, AA, AB...
             val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
             if (index < alphabet.length) alphabet[index].toString()
             else "G${index + 1}"

@@ -8,7 +8,7 @@ fun RegisterRequest.toDomain(): User {
     return User(
         username = this.username,
         email = this.email,
-        passwordHash = "", // Se llenará en el Caso de Uso al hashear
+        passwordHash = "",
         firstName = this.firstName,
         lastName = this.lastName,
         role = this.role,

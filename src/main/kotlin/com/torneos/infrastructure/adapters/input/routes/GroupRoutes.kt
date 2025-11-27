@@ -44,9 +44,9 @@ fun Route.groupRoutes() {
             post("/initialize") {
                 val tournamentId = UUID.fromString(call.parameters["id"])
                 try {
-                    // A. Repartir equipos
+                    //  Repartir equipos
                     assignTeamsUseCase.execute(tournamentId)
-                    // B. Crear partidos
+                    //  Crear partidos
                     generateGroupMatchesUseCase.execute(tournamentId)
 
                     call.respond(HttpStatusCode.OK, mapOf("message" to "Fase de grupos iniciada correctamente"))

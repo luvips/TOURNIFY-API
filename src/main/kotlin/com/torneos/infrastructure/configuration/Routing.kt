@@ -7,13 +7,12 @@ import io.ktor.server.routing.*
 
 fun Application.configureRouting() {
     routing {
-        // Registrar módulos de rutas
         authRoutes()
         userRoutes()
         tournamentRoutes()
         teamRoutes()
         matchRoutes()
-        tournamentMatchRoutes() // Nuevas rutas para generación de bracket
+        tournamentMatchRoutes()
         sportRoutes()
         groupRoutes()
         

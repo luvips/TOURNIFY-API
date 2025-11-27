@@ -26,7 +26,7 @@ class PostgresStandingRepository : StandingRepository {
         goalDifference = this[GroupStandingsTable.goalDifference],
         points = this[GroupStandingsTable.points],
         position = this[GroupStandingsTable.position],
-        updatedAt = this[GroupStandingsTable.updatedAt] // Asegúrate de tener este campo en el modelo o elimínalo si no lo usas
+        updatedAt = this[GroupStandingsTable.updatedAt]
     )
 
     // Clase auxiliar interna para acumular estadísticas antes de guardar
@@ -49,7 +49,6 @@ class PostgresStandingRepository : StandingRepository {
                 Pair(GroupStandingsTable.goalsFor, SortOrder.DESC)
             )
             .mapIndexed { index, row ->
-                // Asignamos la posición dinámicamente según el orden
                 row.toGroupStanding().copy(position = index + 1)
             }
     }
@@ -63,7 +62,6 @@ class PostgresStandingRepository : StandingRepository {
                             (com.torneos.infrastructure.adapters.output.persistence.tables.MatchesTable.status eq com.torneos.domain.enums.MatchStatus.finished)
                 }
 
-            // 2. Estructura para sumar puntos en memoria
             data class Stats(var pts: Int = 0, var gf: Int = 0, var ga: Int = 0, var w: Int = 0, var d: Int = 0, var l: Int = 0, var p: Int = 0)
             val teamStats = mutableMapOf<UUID, Stats>()
 

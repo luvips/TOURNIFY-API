@@ -10,10 +10,7 @@ class SwitchUserRoleUseCase(
     private val userRepository: UserRepository,
     private val authService: AuthServicePort
 ) {
-    /**
-     * Cambia el rol del usuario y genera un nuevo token con el rol actualizado
-     * @return Pair<token, user> con el nuevo token JWT y el usuario actualizado
-     */
+
     suspend fun execute(userId: UUID, newRole: UserRole): Pair<String, User> {
         val user = userRepository.findById(userId)
             ?: throw NoSuchElementException("Usuario no encontrado")

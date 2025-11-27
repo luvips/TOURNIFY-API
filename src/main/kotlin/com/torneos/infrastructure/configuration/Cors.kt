@@ -17,9 +17,8 @@ fun Application.configureCors(){
         allowHeader(HttpHeaders.AccessControlAllowOrigin)
         allowCredentials = true
 
-        // Permitir tu frontend
         allowHost("localhost:4200")
-        allowHost("localhost:59637") // O el puerto que use tu Angular
-        anyHost() // Para desarrollo - QUITAR EN PRODUCCIÓN
+        allowHost("localhost:59637")
+        anyHost()
     }
 }

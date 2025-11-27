@@ -27,7 +27,6 @@ class AssignTeamsToGroupsUseCase(
         }
 
         // 4. Distribuir (Round Robin allocation)
-        // Equipo 1 -> Grupo A, Equipo 2 -> Grupo B, Equipo 3 -> Grupo A...
         var groupIndex = 0
         registrations.forEach { reg ->
             val targetGroup = groups[groupIndex]

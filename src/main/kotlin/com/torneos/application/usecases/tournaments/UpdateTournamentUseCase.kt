@@ -15,13 +15,11 @@ class UpdateTournamentUseCase(private val tournamentRepository: TournamentReposi
             throw SecurityException("No tienes permiso para editar este torneo (Solo el organizador).")
         }
 
-        // 3. Mantener el ID original y el Organizador original, actualizando el resto
-        // El sportId puede actualizarse si se proporciona uno nuevo
+        // 3. Mantener el ID original y el Organizador original
         val tournamentToUpdate = tournament.copy(
             id = id,
             organizerId = existingTournament.organizerId, // No cambiamos el dueño
-            // Permitir actualizar sportId y sport si vienen en la petición
-            sportId = if (tournament.sportId != existingTournament.sportId && tournament.sportId != UUID(0, 0)) 
+            sportId = if (tournament.sportId != existingTournament.sportId && tournament.sportId != UUID(0, 0))
                 tournament.sportId 
             else 
                 existingTournament.sportId,

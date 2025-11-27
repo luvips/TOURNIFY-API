@@ -40,13 +40,11 @@ fun Route.tournamentRoutes() {
     val startTournamentUseCase by application.inject<StartTournamentUseCase>()
     val finishTournamentUseCase by application.inject<FinishTournamentUseCase>()
 
-    // (Otros use cases como standings/teams se pueden inyectar si se usan)
     val updateTournamentImageUseCase by application.inject<UpdateTournamentImageUseCase>()
-    // (Otros use cases como standings/matches/teams se pueden inyectar si se usan)
 
     route("/tournaments") {
 
-        // 1. Listar Torneos (Público)
+        // 1. Listar Torneos
         get {
             try {
                 val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
@@ -58,7 +56,7 @@ fun Route.tournamentRoutes() {
             }
         }
 
-        // 2. Ver Detalle (Público)
+        // 2. Ver Detalle
         get("/{id}") {
             val idParam = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
             try {
@@ -69,7 +67,7 @@ fun Route.tournamentRoutes() {
             }
         }
 
-        // 2.1. Obtener Partidos de un Torneo (Público)
+        // 2.1. Obtener Partidos de un Torneo
         get("/{id}/matches") {
             val idParam = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
             try {
@@ -80,7 +78,7 @@ fun Route.tournamentRoutes() {
             }
         }
 
-        // 2.2. Obtener Registraciones de un Torneo (Público)
+        // 2.2. Obtener Registraciones de un Torneo
         get("/{id}/registrations") {
             val idParam = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
             val statusParam = call.request.queryParameters["status"]
@@ -114,7 +112,7 @@ fun Route.tournamentRoutes() {
                 }
 
                 try {
-                    // Verificamos si es una petición Multipart (con archivo)
+                    // Verificamos si es una petición Multipart
                     if (call.request.contentType().match(ContentType.MultiPart.FormData)) {
 
                         val multipart = call.receiveMultipart()
@@ -126,13 +124,11 @@ fun Route.tournamentRoutes() {
                         multipart.forEachPart { part ->
                             when (part) {
                                 is PartData.FormItem -> {
-                                    // Buscamos el campo "data" que contiene el JSON
                                     if (part.name == "data") {
                                         createRequest = Json.decodeFromString<CreateTournamentRequest>(part.value)
                                     }
                                 }
                                 is PartData.FileItem -> {
-                                    // Buscamos el campo "image"
                                     if (part.name == "image") {
                                         fileName = part.originalFileName ?: "tournament.jpg"
                                         contentType = part.contentType?.toString() ?: "image/jpeg"
@@ -154,8 +150,6 @@ fun Route.tournamentRoutes() {
 
                         // 2. Si venía imagen, subirla y actualizar
                         if (fileBytes != null) {
-                            // Usamos el caso de uso de imagen que ya creaste.
-                            // OJO: Este caso devuelve la URL firmada, pero también actualiza la BD.
                             val imageUrl = updateTournamentImageUseCase.execute(
                                 tournamentId = createdTournament.id,
                                 requesterId = UUID.fromString(userIdStr),
@@ -164,25 +158,13 @@ fun Route.tournamentRoutes() {
                                 contentType = contentType
                             )
 
-                            // Actualizamos el objeto de respuesta con la URL real
-                            // (Nota: updateTournamentImageUseCase ya guardó en BD, esto es solo para responder al cliente)
-                            // Necesitamos reconstruir el objeto torneo con la URL nueva para el mapper
-                            // Como el modelo de dominio puede tener imageUrl como null o key, y el response espera URL...
-                            // Simplemente inyectamos la URL en el objeto de respuesta final o modificamos el objeto torneo si es posible.
 
-                            // Truco rápido: recuperar el torneo actualizado o modificar el objeto en memoria
-                            // Como 'Tournament' es inmutable, creamos copia.
-                            // Pero OJO: 'imageUrl' en el dominio suele ser la KEY, no la URL firmada.
-                            // Sin embargo, para la respuesta al cliente queremos la URL firmada.
-                            // El mapper 'toResponse' usa 'this.imageUrl'.
-                            // Así que asignamos la URL firmada aquí para que el mapper la use.
-                            createdTournament = createdTournament.copy(imageUrl = imageUrl)
+                         createdTournament = createdTournament.copy(imageUrl = imageUrl)
                         }
 
                         call.respond(HttpStatusCode.Created, createdTournament.toResponse())
 
                     } else {
-                        // Comportamiento Clásico (Solo JSON, sin imagen)
                         val request = call.receive<CreateTournamentRequest>()
                         val domainTournament = request.toDomain(organizerId = UUID.fromString(userIdStr))
                         val created = createTournamentUseCase.execute(domainTournament)
@@ -205,7 +187,6 @@ fun Route.tournamentRoutes() {
                 }
 
                 try {
-                    // --- MODO MULTIPART (Datos + Imagen) ---
                     if (call.request.contentType().match(ContentType.MultiPart.FormData)) {
                         val multipart = call.receiveMultipart()
                         var updateRequest: CreateTournamentRequest? = null
@@ -236,17 +217,14 @@ fun Route.tournamentRoutes() {
                             return@put
                         }
 
-                        // 1. Convertir request a dominio
                         val domainTournament = updateRequest!!.toDomain(organizerId = UUID.fromString(userIdStr))
 
-                        // 2. Actualizar los datos del torneo
                         var updatedTournament = updateTournamentUseCase.execute(
                             id = UUID.fromString(tournamentIdStr),
                             tournament = domainTournament,
                             requesterId = UUID.fromString(userIdStr)
                         )
 
-                        // 3. Si hay imagen nueva, subirla y actualizar la referencia
                         if (fileBytes != null) {
                             val imageUrl = updateTournamentImageUseCase.execute(
                                 tournamentId = updatedTournament.id,
@@ -262,7 +240,6 @@ fun Route.tournamentRoutes() {
                         call.respond(HttpStatusCode.OK, updatedTournament.toResponse())
 
                     } else {
-                        // --- MODO JSON CLÁSICO (Solo datos) ---
                         val request = call.receive<CreateTournamentRequest>()
                         val domainTournament = request.toDomain(organizerId = UUID.fromString(userIdStr))
 
@@ -283,7 +260,6 @@ fun Route.tournamentRoutes() {
                     call.respond(HttpStatusCode.BadRequest, mapOf("error" to (e.message ?: "Error al actualizar")))
                 }
             }
-            // : Subir Imagen de Torneo
             post("/{id}/image") {
                 val tournamentIdStr = call.parameters["id"]
                 val userIdStr = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
@@ -293,7 +269,6 @@ fun Route.tournamentRoutes() {
                     return@post
                 }
 
-                // Variables para el archivo
                 var fileName = ""
                 var fileBytes: ByteArray? = null
                 var contentType = "image/jpeg"
