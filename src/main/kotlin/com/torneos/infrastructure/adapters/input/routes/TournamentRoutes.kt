@@ -1,12 +1,16 @@
 package com.torneos.infrastructure.adapters.input.routes
 
 import com.torneos.application.usecases.tournaments.*
+import kotlinx.serialization.json.Json
+import io.ktor.http.content.*
 import com.torneos.infrastructure.adapters.input.dtos.CreateTournamentRequest
 import com.torneos.infrastructure.adapters.input.dtos.JoinTournamentRequest
 import com.torneos.infrastructure.adapters.input.mappers.toDomain
 import com.torneos.infrastructure.adapters.input.mappers.toResponse
 import io.ktor.http.*
-import io.ktor.server.application.*
+import io.ktor.utils.io.readRemaining
+import io.ktor.utils.io.readRemaining
+import kotlinx.io.readByteArray
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
@@ -29,7 +33,7 @@ fun Route.tournamentRoutes() {
     val unfollowTournamentUseCase by application.inject<UnfollowTournamentUseCase>()
     val getFollowedTournamentsUseCase by application.inject<GetFollowedTournamentsUseCase>()
     val getMyTournamentsUseCase by application.inject<GetMyTournamentsUseCase>()
-
+    val updateTournamentImageUseCase by application.inject<UpdateTournamentImageUseCase>()
     // (Otros use cases como standings/matches/teams se pueden inyectar si se usan)
 
     route("/tournaments") {
@@ -60,23 +64,95 @@ fun Route.tournamentRoutes() {
         authenticate("auth-jwt") {
 
             // 3. Crear Torneo
+// 3. Crear Torneo (Soporta JSON simple o Multipart con imagen)
             post {
                 val userIdStr = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
                 val userRole = call.principal<JWTPrincipal>()?.payload?.getClaim("role")?.asString()
 
                 if (userIdStr == null) return@post call.respond(HttpStatusCode.Unauthorized)
-
                 if (userRole !in listOf("organizer", "admin")) {
                     return@post call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Rol no autorizado"))
                 }
 
                 try {
-                    val request = call.receive<CreateTournamentRequest>()
-                    val domainTournament = request.toDomain(organizerId = UUID.fromString(userIdStr))
-                    val created = createTournamentUseCase.execute(domainTournament)
-                    call.respond(HttpStatusCode.Created, created.toResponse())
+                    // Verificamos si es una petición Multipart (con archivo)
+                    if (call.request.contentType().match(ContentType.MultiPart.FormData)) {
+
+                        val multipart = call.receiveMultipart()
+                        var createRequest: CreateTournamentRequest? = null
+                        var fileBytes: ByteArray? = null
+                        var fileName = ""
+                        var contentType = "image/jpeg"
+
+                        multipart.forEachPart { part ->
+                            when (part) {
+                                is PartData.FormItem -> {
+                                    // Buscamos el campo "data" que contiene el JSON
+                                    if (part.name == "data") {
+                                        createRequest = Json.decodeFromString<CreateTournamentRequest>(part.value)
+                                    }
+                                }
+                                is PartData.FileItem -> {
+                                    // Buscamos el campo "image"
+                                    if (part.name == "image") {
+                                        fileName = part.originalFileName ?: "tournament.jpg"
+                                        contentType = part.contentType?.toString() ?: "image/jpeg"
+                                        fileBytes = part.provider().readRemaining().readByteArray()                                    }
+                                }
+                                else -> {}
+                            }
+                            part.dispose()
+                        }
+
+                        if (createRequest == null) {
+                            call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Falta el campo 'data' con el JSON del torneo"))
+                            return@post
+                        }
+
+                        // 1. Crear el torneo en BD
+                        val domainTournament = createRequest!!.toDomain(organizerId = UUID.fromString(userIdStr))
+                        var createdTournament = createTournamentUseCase.execute(domainTournament)
+
+                        // 2. Si venía imagen, subirla y actualizar
+                        if (fileBytes != null) {
+                            // Usamos el caso de uso de imagen que ya creaste.
+                            // OJO: Este caso devuelve la URL firmada, pero también actualiza la BD.
+                            val imageUrl = updateTournamentImageUseCase.execute(
+                                tournamentId = createdTournament.id,
+                                requesterId = UUID.fromString(userIdStr),
+                                fileName = fileName,
+                                fileBytes = fileBytes!!,
+                                contentType = contentType
+                            )
+
+                            // Actualizamos el objeto de respuesta con la URL real
+                            // (Nota: updateTournamentImageUseCase ya guardó en BD, esto es solo para responder al cliente)
+                            // Necesitamos reconstruir el objeto torneo con la URL nueva para el mapper
+                            // Como el modelo de dominio puede tener imageUrl como null o key, y el response espera URL...
+                            // Simplemente inyectamos la URL en el objeto de respuesta final o modificamos el objeto torneo si es posible.
+
+                            // Truco rápido: recuperar el torneo actualizado o modificar el objeto en memoria
+                            // Como 'Tournament' es inmutable, creamos copia.
+                            // Pero OJO: 'imageUrl' en el dominio suele ser la KEY, no la URL firmada.
+                            // Sin embargo, para la respuesta al cliente queremos la URL firmada.
+                            // El mapper 'toResponse' usa 'this.imageUrl'.
+                            // Así que asignamos la URL firmada aquí para que el mapper la use.
+                            createdTournament = createdTournament.copy(imageUrl = imageUrl)
+                        }
+
+                        call.respond(HttpStatusCode.Created, createdTournament.toResponse())
+
+                    } else {
+                        // Comportamiento Clásico (Solo JSON, sin imagen)
+                        val request = call.receive<CreateTournamentRequest>()
+                        val domainTournament = request.toDomain(organizerId = UUID.fromString(userIdStr))
+                        val created = createTournamentUseCase.execute(domainTournament)
+                        call.respond(HttpStatusCode.Created, created.toResponse())
+                    }
+
                 } catch (e: Exception) {
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to (e.message ?: "Error al crear")))
+                    e.printStackTrace()
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to (e.message ?: "Error al crear torneo")))
                 }
             }
 
@@ -90,25 +166,139 @@ fun Route.tournamentRoutes() {
                 }
 
                 try {
-                    val request = call.receive<CreateTournamentRequest>()
-                    // Convertimos a dominio usando el ID del usuario actual como organizer temporalmente
-                    val domainTournament = request.toDomain(organizerId = UUID.fromString(userIdStr))
+                    // --- MODO MULTIPART (Datos + Imagen) ---
+                    if (call.request.contentType().match(ContentType.MultiPart.FormData)) {
+                        val multipart = call.receiveMultipart()
+                        var updateRequest: CreateTournamentRequest? = null
+                        var fileBytes: ByteArray? = null
+                        var fileName = ""
+                        var contentType = "image/jpeg"
 
-                    val updated = updateTournamentUseCase.execute(
-                        id = UUID.fromString(tournamentIdStr),
-                        tournament = domainTournament,
-                        requesterId = UUID.fromString(userIdStr)
-                    )
-                    call.respond(HttpStatusCode.OK, updated.toResponse())
+                        multipart.forEachPart { part ->
+                            when (part) {
+                                is PartData.FormItem -> {
+                                    if (part.name == "data") {
+                                        updateRequest = Json.decodeFromString<CreateTournamentRequest>(part.value)
+                                    }
+                                }
+                                is PartData.FileItem -> {
+                                    if (part.name == "image") {
+                                        fileName = part.originalFileName ?: "tournament.jpg"
+                                        contentType = part.contentType?.toString() ?: "image/jpeg"
+                                        fileBytes = part.provider().readRemaining().readByteArray()                                    }
+                                }
+                                else -> {}
+                            }
+                            part.dispose()
+                        }
+
+                        if (updateRequest == null) {
+                            call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Falta el campo 'data' con el JSON"))
+                            return@put
+                        }
+
+                        // 1. Convertir request a dominio
+                        val domainTournament = updateRequest!!.toDomain(organizerId = UUID.fromString(userIdStr))
+
+                        // 2. Actualizar los datos del torneo
+                        var updatedTournament = updateTournamentUseCase.execute(
+                            id = UUID.fromString(tournamentIdStr),
+                            tournament = domainTournament,
+                            requesterId = UUID.fromString(userIdStr)
+                        )
+
+                        // 3. Si hay imagen nueva, subirla y actualizar la referencia
+                        if (fileBytes != null) {
+                            val imageUrl = updateTournamentImageUseCase.execute(
+                                tournamentId = updatedTournament.id,
+                                requesterId = UUID.fromString(userIdStr),
+                                fileName = fileName,
+                                fileBytes = fileBytes!!,
+                                contentType = contentType
+                            )
+                            // Actualizar el objeto de respuesta con la nueva URL firmada
+                            updatedTournament = updatedTournament.copy(imageUrl = imageUrl)
+                        }
+
+                        call.respond(HttpStatusCode.OK, updatedTournament.toResponse())
+
+                    } else {
+                        // --- MODO JSON CLÁSICO (Solo datos) ---
+                        val request = call.receive<CreateTournamentRequest>()
+                        val domainTournament = request.toDomain(organizerId = UUID.fromString(userIdStr))
+
+                        val updated = updateTournamentUseCase.execute(
+                            id = UUID.fromString(tournamentIdStr),
+                            tournament = domainTournament,
+                            requesterId = UUID.fromString(userIdStr)
+                        )
+                        call.respond(HttpStatusCode.OK, updated.toResponse())
+                    }
+
                 } catch (e: SecurityException) {
                     call.respond(HttpStatusCode.Forbidden, mapOf("error" to e.message))
                 } catch (e: NoSuchElementException) {
                     call.respond(HttpStatusCode.NotFound, mapOf("error" to e.message))
                 } catch (e: Exception) {
+                    e.printStackTrace()
                     call.respond(HttpStatusCode.BadRequest, mapOf("error" to (e.message ?: "Error al actualizar")))
                 }
             }
+            // : Subir Imagen de Torneo
+            post("/{id}/image") {
+                val tournamentIdStr = call.parameters["id"]
+                val userIdStr = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
 
+                if (tournamentIdStr == null || userIdStr == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Datos inválidos"))
+                    return@post
+                }
+
+                // Variables para el archivo
+                var fileName = ""
+                var fileBytes: ByteArray? = null
+                var contentType = "image/jpeg"
+
+                try {
+                    val multipart = call.receiveMultipart()
+
+                    multipart.forEachPart { part ->
+                        if (part is PartData.FileItem) {
+                            fileName = part.originalFileName ?: "tournament.jpg"
+                            contentType = part.contentType?.toString() ?: "image/jpeg"
+                            fileBytes = part.streamProvider().readBytes()
+                        }
+                        part.dispose()
+                    }
+
+                    if (fileBytes == null) {
+                        call.respond(HttpStatusCode.BadRequest, mapOf("error" to "No se envió ninguna imagen"))
+                        return@post
+                    }
+
+                    // Ejecutar lógica
+                    val imageUrl = updateTournamentImageUseCase.execute(
+                        tournamentId = UUID.fromString(tournamentIdStr),
+                        requesterId = UUID.fromString(userIdStr),
+                        fileName = fileName,
+                        fileBytes = fileBytes!!,
+                        contentType = contentType
+                    )
+
+                    call.respond(HttpStatusCode.OK, mapOf(
+                        "message" to "Imagen del torneo actualizada",
+                        "imageUrl" to imageUrl
+                    ))
+
+                } catch (e: SecurityException) {
+                    call.respond(HttpStatusCode.Forbidden, mapOf("error" to e.message))
+                } catch (e: NoSuchElementException) {
+                    call.respond(HttpStatusCode.NotFound, mapOf("error" to e.message))
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error al subir imagen"))
+                }
+            }
             // 5. Eliminar Torneo (DELETE)
             delete("/{id}") {
                 val tournamentIdStr = call.parameters["id"]

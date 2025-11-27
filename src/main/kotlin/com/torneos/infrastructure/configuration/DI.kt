@@ -57,6 +57,7 @@ fun getAppModule(config: ApplicationConfig) = module {
     single<StandingRepository> { PostgresStandingRepository() }
     single { UpdateTournamentUseCase(get()) }
     single { DeleteTournamentUseCase(get()) }
+    single { UpdateTournamentImageUseCase(get(), get()) }
 
     // Teams
     single { CreateTeamUseCase(get()) }
