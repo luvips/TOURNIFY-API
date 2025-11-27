@@ -62,6 +62,8 @@ fun getAppModule(config: ApplicationConfig) = module {
     single { UpdateTournamentUseCase(get()) }
     single { DeleteTournamentUseCase(get()) }
     single { UpdateTournamentImageUseCase(get(), get()) }
+    single { StartTournamentUseCase(get()) }
+    single { FinishTournamentUseCase(get()) }
 
     // Teams
     single { CreateTeamUseCase(get(), get()) }

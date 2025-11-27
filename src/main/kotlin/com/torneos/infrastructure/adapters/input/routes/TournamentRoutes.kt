@@ -37,6 +37,8 @@ fun Route.tournamentRoutes() {
     val getTournamentRegistrationsUseCase by application.inject<GetTournamentRegistrationsUseCase>()
     val approveRegistrationUseCase by application.inject<ApproveRegistrationUseCase>()
     val rejectRegistrationUseCase by application.inject<RejectRegistrationUseCase>()
+    val startTournamentUseCase by application.inject<StartTournamentUseCase>()
+    val finishTournamentUseCase by application.inject<FinishTournamentUseCase>()
 
     // (Otros use cases como standings/teams se pueden inyectar si se usan)
     val updateTournamentImageUseCase by application.inject<UpdateTournamentImageUseCase>()
@@ -500,6 +502,60 @@ fun Route.tournamentRoutes() {
                     call.respond(HttpStatusCode.Conflict, mapOf("error" to e.message))
                 } catch (e: Exception) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("error" to (e.message ?: "Error al rechazar registración")))
+                }
+            }
+
+            // 13. Iniciar Torneo
+            post("/{id}/start") {
+                val userIdStr = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
+                val tournamentIdStr = call.parameters["id"]
+
+                if (userIdStr == null || tournamentIdStr == null) {
+                    return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Parámetros inválidos"))
+                }
+
+                try {
+                    val updatedTournament = startTournamentUseCase.execute(
+                        tournamentId = UUID.fromString(tournamentIdStr),
+                        requesterId = UUID.fromString(userIdStr)
+                    )
+                    call.respond(HttpStatusCode.OK, updatedTournament.toResponse())
+                } catch (e: NoSuchElementException) {
+                    call.respond(HttpStatusCode.NotFound, mapOf("error" to e.message))
+                } catch (e: SecurityException) {
+                    call.respond(HttpStatusCode.Forbidden, mapOf("error" to e.message))
+                } catch (e: IllegalStateException) {
+                    call.respond(HttpStatusCode.Conflict, mapOf("error" to e.message))
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("error" to (e.message ?: "Error al iniciar torneo")))
+                }
+            }
+
+            // 14. Finalizar Torneo
+            post("/{id}/finish") {
+                val userIdStr = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
+                val tournamentIdStr = call.parameters["id"]
+
+                if (userIdStr == null || tournamentIdStr == null) {
+                    return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Parámetros inválidos"))
+                }
+
+                try {
+                    val updatedTournament = finishTournamentUseCase.execute(
+                        tournamentId = UUID.fromString(tournamentIdStr),
+                        requesterId = UUID.fromString(userIdStr)
+                    )
+                    call.respond(HttpStatusCode.OK, updatedTournament.toResponse())
+                } catch (e: NoSuchElementException) {
+                    call.respond(HttpStatusCode.NotFound, mapOf("error" to e.message))
+                } catch (e: SecurityException) {
+                    call.respond(HttpStatusCode.Forbidden, mapOf("error" to e.message))
+                } catch (e: IllegalStateException) {
+                    call.respond(HttpStatusCode.Conflict, mapOf("error" to e.message))
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("error" to (e.message ?: "Error al finalizar torneo")))
                 }
             }
         }
