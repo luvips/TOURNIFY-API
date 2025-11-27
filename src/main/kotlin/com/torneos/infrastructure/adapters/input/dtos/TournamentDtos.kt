@@ -61,6 +61,7 @@ data class TeamRegistrationResponse(
     val teamId: String,
     val teamName: String,
     val teamLogoUrl: String?,
+    val memberCount: Int,
     val status: String,
     val registrationDate: String,
     val approvedAt: String?

@@ -73,6 +73,7 @@ fun RegistrationWithTeamInfo.toResponse(): TeamRegistrationResponse {
         teamId = this.registration.teamId.toString(),
         teamName = this.team?.name ?: "Unknown Team",
         teamLogoUrl = this.team?.logoUrl,
+        memberCount = this.memberCount,
         status = this.registration.status.name,
         registrationDate = this.registration.registrationDate.toString(),
         approvedAt = this.registration.approvedAt?.toString()

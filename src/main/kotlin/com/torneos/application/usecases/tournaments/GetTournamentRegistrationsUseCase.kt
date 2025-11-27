@@ -9,7 +9,8 @@ import java.util.UUID
 
 data class RegistrationWithTeamInfo(
     val registration: TeamRegistration,
-    val team: Team?
+    val team: Team?,
+    val memberCount: Int
 )
 
 class GetTournamentRegistrationsUseCase(
@@ -27,7 +28,8 @@ class GetTournamentRegistrationsUseCase(
         
         return filteredRegistrations.map { registration ->
             val team = teamRepository.findById(registration.teamId)
-            RegistrationWithTeamInfo(registration, team)
+            val memberCount = team?.let { teamRepository.getMembers(it.id).size } ?: 0
+            RegistrationWithTeamInfo(registration, team, memberCount)
         }
     }
 }
