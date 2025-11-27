@@ -44,12 +44,33 @@ data class TournamentResponse(
     val tournamentType: String,
     val status: String,
     val startDate: String,
+    val endDate: String?,
+    val registrationDeadline: String?,
+    val location: String?,
     val maxTeams: Int,
     val currentTeams: Int,
-    val imageUrl: String?
+    val prizePool: String?,
+    val rulesText: String?,
+    val imageUrl: String?,
+    val eliminationMode: String?,
+    val category: String?,
+    val sportSubType: String?
 )
 
 @Serializable
 data class JoinTournamentRequest(
     val teamId: String
+)
+
+@Serializable
+data class TeamRegistrationResponse(
+    val id: String,
+    val tournamentId: String,
+    val teamId: String,
+    val teamName: String,
+    val teamLogoUrl: String?,
+    val memberCount: Int,
+    val status: String,
+    val registrationDate: String,
+    val approvedAt: String?
 )

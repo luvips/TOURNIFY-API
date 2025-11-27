@@ -2,12 +2,15 @@ package com.torneos.infrastructure.adapters.output.persistence.repositories
 
 import com.torneos.domain.models.Team
 import com.torneos.domain.models.TeamMember
+import com.torneos.domain.models.TeamMemberWithUser
 import com.torneos.domain.models.TeamRegistration
+import com.torneos.domain.models.TeamWithMembers
 import com.torneos.domain.ports.TeamRepository
 import com.torneos.infrastructure.adapters.output.persistence.DatabaseFactory.dbQuery
 import com.torneos.infrastructure.adapters.output.persistence.tables.TeamMembersTable
 import com.torneos.infrastructure.adapters.output.persistence.tables.TeamRegistrationsTable
 import com.torneos.infrastructure.adapters.output.persistence.tables.TeamsTable
+import com.torneos.infrastructure.adapters.output.persistence.tables.UsersTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import java.util.UUID
@@ -63,6 +66,47 @@ class PostgresTeamRepository : TeamRepository {
     override suspend fun delete(id: UUID): Boolean = dbQuery {
         TeamsTable.deleteWhere { TeamsTable.id eq id } > 0
     }
+
+    override suspend fun getTeamWithMembers(teamId: UUID): TeamWithMembers? = dbQuery {
+        // Obtener el equipo
+        val team = TeamsTable.selectAll().where { TeamsTable.id eq teamId }
+            .map { it.toTeam() }
+            .singleOrNull() ?: return@dbQuery null
+
+        // Obtener miembros con JOIN a Users para obtener nombre y email
+        val members = (TeamMembersTable leftJoin UsersTable)
+            .selectAll()
+            .where { TeamMembersTable.teamId eq teamId }
+            .map { row ->
+                TeamMemberWithUser(
+                    id = row[TeamMembersTable.id],
+                    teamId = row[TeamMembersTable.teamId],
+                    userId = row[TeamMembersTable.userId],
+                    // Priorizar nombre/email de la tabla Users si existe, sino usar los de TeamMembers
+                    name = row.getOrNull(UsersTable.firstName)?.let { firstName ->
+                        val lastName = row.getOrNull(UsersTable.lastName) ?: ""
+                        "$firstName $lastName".trim()
+                    } ?: row[TeamMembersTable.memberName],
+                    email = row.getOrNull(UsersTable.email) ?: row[TeamMembersTable.memberEmail],
+                    role = row[TeamMembersTable.role],
+                    jerseyNumber = row[TeamMembersTable.jerseyNumber],
+                    position = row[TeamMembersTable.position],
+                    joinedAt = row[TeamMembersTable.joinedAt]
+                )
+            }
+
+        TeamWithMembers(team, members)
+    }
+
+    override suspend fun isMemberOfTeam(teamId: UUID, userId: UUID): Boolean = dbQuery {
+        TeamMembersTable.selectAll()
+            .where { 
+                (TeamMembersTable.teamId eq teamId) and 
+                (TeamMembersTable.userId eq userId) 
+            }
+            .count() > 0
+    }
+    
     // --- MEMBERS ---
     override suspend fun addMember(member: TeamMember): TeamMember = dbQuery {
         TeamMembersTable.insert {

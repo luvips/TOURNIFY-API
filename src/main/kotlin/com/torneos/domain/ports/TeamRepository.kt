@@ -2,7 +2,9 @@ package com.torneos.domain.ports
 
 import com.torneos.domain.models.Team
 import com.torneos.domain.models.TeamMember
+import com.torneos.domain.models.TeamMemberWithUser
 import com.torneos.domain.models.TeamRegistration
+import com.torneos.domain.models.TeamWithMembers
 import com.torneos.domain.enums.RegistrationStatus
 import java.util.UUID
 
@@ -13,7 +15,8 @@ interface TeamRepository {
     suspend fun findByCaptain(captainId: UUID): List<Team>
     suspend fun update(team: Team): Team?
     suspend fun delete(id: UUID): Boolean
-
+    suspend fun getTeamWithMembers(teamId: UUID): TeamWithMembers?
+    suspend fun isMemberOfTeam(teamId: UUID, userId: UUID): Boolean
 
     // Miembros del Equipo
     suspend fun addMember(member: TeamMember): TeamMember

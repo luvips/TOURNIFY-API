@@ -6,6 +6,7 @@ import com.torneos.application.usecases.sports.*
 import com.torneos.application.usecases.teams.*
 import com.torneos.application.usecases.tournaments.*
 import com.torneos.application.usecases.users.*
+import com.torneos.application.usecases.groups.*
 import com.torneos.domain.ports.*
 import com.torneos.infrastructure.adapters.output.persistence.repositories.*
 import com.torneos.infrastructure.adapters.output.services.BCryptAuthService
@@ -48,6 +49,9 @@ fun getAppModule(config: ApplicationConfig) = module {
     single { GetTournamentStandingsUseCase(get(), get()) } // MatchRepo o StandingRepo
     single { GetTournamentMatchesUseCase(get()) }
     single { GetTournamentTeamsUseCase(get(), get()) }
+    single { GetTournamentRegistrationsUseCase(get(), get()) }
+    single { ApproveRegistrationUseCase(get(), get()) }
+    single { RejectRegistrationUseCase(get()) }
     single { JoinTournamentUseCase(get(), get(), get()) }
     single { FollowTournamentUseCase(get()) }
     single { UnfollowTournamentUseCase(get()) }
@@ -60,11 +64,13 @@ fun getAppModule(config: ApplicationConfig) = module {
     single { UpdateTournamentImageUseCase(get(), get()) }
 
     // Teams
-    single { CreateTeamUseCase(get()) }
+    single { CreateTeamUseCase(get(), get()) }
     single { GetMyTeamsUseCase(get()) }
+    single { GetTeamDetailsUseCase(get()) }
     single { AddMemberUseCase(get(), get()) }
     single { DeleteTeamUseCase(get()) }
     single { RemoveMemberUseCase(get()) }
+    single { UpdateTeamUseCase(get()) }
     
     // Sports
     single { GetSportsUseCase(get()) }
@@ -73,7 +79,14 @@ fun getAppModule(config: ApplicationConfig) = module {
     single { DeleteSportUseCase(get()) }
     
     // Matches
-    single { UpdateMatchResultUseCase(get()) }
+    single { CreateMatchUseCase(get(), get(), get()) }
+    single { GenerateBracketUseCase(get(), get(), get()) }
+    single { UpdateMatchResultUseCase(get(), get()) }
     single { GetMatchDetailsUseCase(get()) }
     single { DeleteMatchUseCase(get()) }
+
+    //GRupos
+    single { GenerateGroupsUseCase(get(), get()) }
+    single { AssignTeamsToGroupsUseCase(get(), get()) }
+    single { GenerateGroupMatchesUseCase(get(), get(), get()) }
 }
