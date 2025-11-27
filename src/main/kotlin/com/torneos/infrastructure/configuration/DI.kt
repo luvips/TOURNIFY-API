@@ -61,6 +61,7 @@ fun getAppModule(config: ApplicationConfig) = module {
     // Teams
     single { CreateTeamUseCase(get()) }
     single { GetMyTeamsUseCase(get()) }
+    single { GetTeamDetailsUseCase(get()) }
     single { AddMemberUseCase(get(), get()) }
     single { DeleteTeamUseCase(get()) }
     single { RemoveMemberUseCase(get()) }

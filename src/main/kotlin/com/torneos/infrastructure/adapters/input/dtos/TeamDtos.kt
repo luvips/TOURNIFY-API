@@ -28,3 +28,29 @@ data class AddMemberRequest(
     val jerseyNumber: Int? = null,
     val position: String? = null
 )
+
+@Serializable
+data class TeamMemberWithUserResponse(
+    val id: String,
+    val userId: String?,
+    val teamId: String,
+    val name: String?,
+    val email: String?,
+    val role: String,
+    val jerseyNumber: Int?,
+    val position: String?,
+    val joinedAt: String
+)
+
+@Serializable
+data class TeamWithMembersResponse(
+    val id: String,
+    val name: String,
+    val shortName: String?,
+    val description: String?,
+    val captainId: String?,
+    val logoUrl: String?,
+    val contactEmail: String?,
+    val contactPhone: String?,
+    val members: List<TeamMemberWithUserResponse>
+)

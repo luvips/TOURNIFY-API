@@ -4,6 +4,7 @@ import com.torneos.application.usecases.teams.CreateTeamUseCase
 import com.torneos.application.usecases.teams.AddMemberUseCase
 import com.torneos.application.usecases.teams.DeleteTeamUseCase
 import com.torneos.application.usecases.teams.GetMyTeamsUseCase
+import com.torneos.application.usecases.teams.GetTeamDetailsUseCase
 import com.torneos.application.usecases.teams.RemoveMemberUseCase
 import com.torneos.infrastructure.adapters.input.dtos.AddMemberRequest
 import com.torneos.infrastructure.adapters.input.dtos.CreateTeamRequest
@@ -22,6 +23,7 @@ import java.util.UUID
 fun Route.teamRoutes() {
     val createTeamUseCase by application.inject<CreateTeamUseCase>()
     val getMyTeamsUseCase by application.inject<GetMyTeamsUseCase>()
+    val getTeamDetailsUseCase by application.inject<GetTeamDetailsUseCase>()
     val addMemberUseCase by application.inject<AddMemberUseCase>()
     val deleteTeamUseCase by application.inject<DeleteTeamUseCase>()
     val removeMemberUseCase by application.inject<RemoveMemberUseCase>()
@@ -36,6 +38,33 @@ fun Route.teamRoutes() {
 
                 val teams = getMyTeamsUseCase.execute(userId)
                 call.respond(HttpStatusCode.OK, teams.map { it.toResponse() })
+            }
+
+            // Obtener detalles de un equipo con sus miembros
+            get("/{id}") {
+                val principal = call.principal<JWTPrincipal>()
+                val userId = UUID.fromString(principal?.payload?.getClaim("id")?.asString())
+                
+                val teamIdStr = call.parameters["id"]
+                
+                if (teamIdStr == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "ID de equipo inválido"))
+                    return@get
+                }
+                
+                try {
+                    val teamId = UUID.fromString(teamIdStr)
+                    val teamWithMembers = getTeamDetailsUseCase.execute(teamId, userId)
+                    call.respond(HttpStatusCode.OK, teamWithMembers.toResponse())
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "ID de equipo inválido"))
+                } catch (e: NoSuchElementException) {
+                    call.respond(HttpStatusCode.NotFound, mapOf("error" to "Equipo no encontrado"))
+                } catch (e: SecurityException) {
+                    call.respond(HttpStatusCode.Forbidden, mapOf("error" to e.message))
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error interno del servidor"))
+                }
             }
 
             // Crear equipo
