@@ -11,9 +11,11 @@ class GetTeamDetailsUseCase(private val teamRepository: TeamRepository) {
         val teamWithMembers = teamRepository.getTeamWithMembers(teamId)
             ?: throw NoSuchElementException("Equipo no encontrado")
         
-        // 2. Verificar que el usuario es miembro del equipo
+        // 2. Verificar que el usuario es miembro del equipo O es el capitán
         val isMember = teamRepository.isMemberOfTeam(teamId, userId)
-        if (!isMember) {
+        val isCaptain = teamWithMembers.team.captainId == userId
+        
+        if (!isMember && !isCaptain) {
             throw SecurityException("No tienes permiso para ver los detalles de este equipo")
         }
         

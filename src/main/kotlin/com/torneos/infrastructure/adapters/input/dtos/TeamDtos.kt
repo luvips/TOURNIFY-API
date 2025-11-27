@@ -16,8 +16,14 @@ data class CreateTeamRequest(
 data class TeamResponse(
     val id: String,
     val name: String,
+    val shortName: String?,
+    val description: String?,
     val logoUrl: String?,
-    val captainId: String?
+    val captainId: String?,
+    val contactEmail: String?,
+    val contactPhone: String?,
+    val createdAt: String,
+    val updatedAt: String?
 )
 
 @Serializable
@@ -27,6 +33,16 @@ data class AddMemberRequest(
     val role: MemberRole = MemberRole.player,
     val jerseyNumber: Int? = null,
     val position: String? = null
+)
+
+@Serializable
+data class UpdateTeamRequest(
+    val name: String?,
+    val shortName: String?,
+    val description: String?,
+    val logoUrl: String?,
+    val contactEmail: String?,
+    val contactPhone: String?
 )
 
 @Serializable

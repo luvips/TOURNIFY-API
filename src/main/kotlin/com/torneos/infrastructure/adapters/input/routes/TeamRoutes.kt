@@ -6,8 +6,10 @@ import com.torneos.application.usecases.teams.DeleteTeamUseCase
 import com.torneos.application.usecases.teams.GetMyTeamsUseCase
 import com.torneos.application.usecases.teams.GetTeamDetailsUseCase
 import com.torneos.application.usecases.teams.RemoveMemberUseCase
+import com.torneos.application.usecases.teams.UpdateTeamUseCase
 import com.torneos.infrastructure.adapters.input.dtos.AddMemberRequest
 import com.torneos.infrastructure.adapters.input.dtos.CreateTeamRequest
+import com.torneos.infrastructure.adapters.input.dtos.UpdateTeamRequest
 import com.torneos.infrastructure.adapters.input.mappers.toDomain
 import com.torneos.infrastructure.adapters.input.mappers.toResponse
 import io.ktor.http.*
@@ -27,6 +29,7 @@ fun Route.teamRoutes() {
     val addMemberUseCase by application.inject<AddMemberUseCase>()
     val deleteTeamUseCase by application.inject<DeleteTeamUseCase>()
     val removeMemberUseCase by application.inject<RemoveMemberUseCase>()
+    val updateTeamUseCase by application.inject<UpdateTeamUseCase>()
 
     route("/teams") {
         authenticate("auth-jwt") {
@@ -80,13 +83,75 @@ fun Route.teamRoutes() {
 
             // Agregar miembro
             post("/{id}/members") {
-                val teamId = UUID.fromString(call.parameters["id"])
-                val request = call.receive<AddMemberRequest>()
-
-                // TODO: Validar que el usuario actual es el capitán del equipo
-                val member = addMemberUseCase.execute(request.toDomain(teamId))
-                call.respond(HttpStatusCode.OK, mapOf("message" to "Miembro agregado"))
+                val principal = call.principal<JWTPrincipal>()
+                val userId = UUID.fromString(principal?.payload?.getClaim("id")?.asString())
+                val teamIdStr = call.parameters["id"]
+                
+                if (teamIdStr == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "ID de equipo inválido"))
+                    return@post
+                }
+                
+                try {
+                    val teamId = UUID.fromString(teamIdStr)
+                    val request = call.receive<AddMemberRequest>()
+                    
+                    // Validar que el usuario actual es el capitán del equipo
+                    val team = getTeamDetailsUseCase.execute(teamId, userId)
+                    if (team.team.captainId != userId) {
+                        call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Solo el capitán puede agregar miembros"))
+                        return@post
+                    }
+                    
+                    val member = addMemberUseCase.execute(request.toDomain(teamId))
+                    call.respond(HttpStatusCode.Created, member.toResponse())
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to (e.message ?: "Datos inválidos")))
+                } catch (e: NoSuchElementException) {
+                    call.respond(HttpStatusCode.NotFound, mapOf("error" to (e.message ?: "No encontrado")))
+                } catch (e: SecurityException) {
+                    call.respond(HttpStatusCode.Forbidden, mapOf("error" to e.message))
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error interno del servidor"))
+                }
             }
+            
+            // Actualizar equipo
+            put("/{id}") {
+                val principal = call.principal<JWTPrincipal>()
+                val userId = UUID.fromString(principal?.payload?.getClaim("id")?.asString())
+                val teamIdStr = call.parameters["id"]
+                
+                if (teamIdStr == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "ID de equipo inválido"))
+                    return@put
+                }
+                
+                try {
+                    val teamId = UUID.fromString(teamIdStr)
+                    val request = call.receive<UpdateTeamRequest>()
+                    
+                    // Obtener el equipo existente
+                    val existingTeamWithMembers = getTeamDetailsUseCase.execute(teamId, userId)
+                    val existingTeam = existingTeamWithMembers.team
+                    
+                    // Aplicar actualizaciones
+                    val updatedTeam = request.toDomain(teamId, existingTeam)
+                    
+                    // Ejecutar actualización con validación de capitán
+                    val result = updateTeamUseCase.execute(teamId, updatedTeam, userId)
+                    call.respond(HttpStatusCode.OK, result.toResponse())
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "ID de equipo inválido"))
+                } catch (e: NoSuchElementException) {
+                    call.respond(HttpStatusCode.NotFound, mapOf("error" to "Equipo no encontrado"))
+                } catch (e: SecurityException) {
+                    call.respond(HttpStatusCode.Forbidden, mapOf("error" to e.message))
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error interno del servidor"))
+                }
+            }
+            
             delete("/{id}") {
                 val teamIdStr = call.parameters["id"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
                 val userIdStr = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
