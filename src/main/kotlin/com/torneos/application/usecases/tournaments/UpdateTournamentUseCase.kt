@@ -16,12 +16,16 @@ class UpdateTournamentUseCase(private val tournamentRepository: TournamentReposi
         }
 
         // 3. Mantener el ID original y el Organizador original, actualizando el resto
-        // Nota: Reutilizamos el objeto 'tournament' que viene del JSON, pero forzamos el ID correcto
+        // El sportId puede actualizarse si se proporciona uno nuevo
         val tournamentToUpdate = tournament.copy(
             id = id,
             organizerId = existingTournament.organizerId, // No cambiamos el dueño
-            sportId = existingTournament.sportId,         // Generalmente no se cambia el deporte
-            sport = existingTournament.sport
+            // Permitir actualizar sportId y sport si vienen en la petición
+            sportId = if (tournament.sportId != existingTournament.sportId && tournament.sportId != UUID(0, 0)) 
+                tournament.sportId 
+            else 
+                existingTournament.sportId,
+            sport = if (tournament.sport != null) tournament.sport else existingTournament.sport
         )
 
         // 4. Guardar cambios
