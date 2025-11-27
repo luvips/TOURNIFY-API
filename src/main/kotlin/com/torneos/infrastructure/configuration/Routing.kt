@@ -13,6 +13,7 @@ fun Application.configureRouting() {
         tournamentRoutes()
         teamRoutes()
         matchRoutes()
+        tournamentMatchRoutes() // Nuevas rutas para generación de bracket
         sportRoutes()
         
         // Health Check

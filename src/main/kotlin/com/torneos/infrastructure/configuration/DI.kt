@@ -74,6 +74,8 @@ fun getAppModule(config: ApplicationConfig) = module {
     single { DeleteSportUseCase(get()) }
     
     // Matches
+    single { CreateMatchUseCase(get(), get(), get()) }
+    single { GenerateBracketUseCase(get(), get(), get()) }
     single { UpdateMatchResultUseCase(get()) }
     single { GetMatchDetailsUseCase(get()) }
     single { DeleteMatchUseCase(get()) }
