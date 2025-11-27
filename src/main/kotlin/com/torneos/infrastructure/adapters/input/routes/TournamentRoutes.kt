@@ -31,6 +31,8 @@ fun Route.tournamentRoutes() {
     val getMyTournamentsUseCase by application.inject<GetMyTournamentsUseCase>()
     val getTournamentMatchesUseCase by application.inject<GetTournamentMatchesUseCase>()
     val getTournamentRegistrationsUseCase by application.inject<GetTournamentRegistrationsUseCase>()
+    val approveRegistrationUseCase by application.inject<ApproveRegistrationUseCase>()
+    val rejectRegistrationUseCase by application.inject<RejectRegistrationUseCase>()
 
     // (Otros use cases como standings/teams se pueden inyectar si se usan)
 
@@ -73,8 +75,17 @@ fun Route.tournamentRoutes() {
         // 2.2. Obtener Registraciones de un Torneo (Público)
         get("/{id}/registrations") {
             val idParam = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+            val statusParam = call.request.queryParameters["status"]
+            
             try {
-                val registrations = getTournamentRegistrationsUseCase.execute(UUID.fromString(idParam))
+                val status = statusParam?.let { 
+                    try {
+                        com.torneos.domain.enums.RegistrationStatus.valueOf(it)
+                    } catch (e: IllegalArgumentException) {
+                        null
+                    }
+                }
+                val registrations = getTournamentRegistrationsUseCase.execute(UUID.fromString(idParam), status)
                 call.respond(HttpStatusCode.OK, registrations.map { it.toResponse() })
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error al obtener registraciones"))
@@ -234,6 +245,69 @@ fun Route.tournamentRoutes() {
                     call.respond(HttpStatusCode.OK, tournaments.map { it.toResponse() })
                 } catch (e: Exception) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("error" to (e.message ?: "Error al obtener tus torneos")))
+                }
+            }
+
+            // 11. Aprobar Registración
+            post("/{tournamentId}/registrations/{registrationId}/approve") {
+                val userIdStr = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
+                val tournamentIdStr = call.parameters["tournamentId"]
+                val registrationIdStr = call.parameters["registrationId"]
+
+                if (userIdStr == null || tournamentIdStr == null || registrationIdStr == null) {
+                    return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Parámetros inválidos"))
+                }
+
+                try {
+                    approveRegistrationUseCase.execute(
+                        tournamentId = UUID.fromString(tournamentIdStr),
+                        registrationId = UUID.fromString(registrationIdStr),
+                        approverId = UUID.fromString(userIdStr)
+                    )
+                    call.respond(HttpStatusCode.OK, mapOf("message" to "Registración aprobada exitosamente"))
+                } catch (e: NoSuchElementException) {
+                    call.respond(HttpStatusCode.NotFound, mapOf("error" to e.message))
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.message))
+                } catch (e: IllegalStateException) {
+                    call.respond(HttpStatusCode.Conflict, mapOf("error" to e.message))
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("error" to (e.message ?: "Error al aprobar registración")))
+                }
+            }
+
+            // 12. Rechazar Registración
+            post("/{tournamentId}/registrations/{registrationId}/reject") {
+                val userIdStr = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
+                val tournamentIdStr = call.parameters["tournamentId"]
+                val registrationIdStr = call.parameters["registrationId"]
+
+                if (userIdStr == null || tournamentIdStr == null || registrationIdStr == null) {
+                    return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Parámetros inválidos"))
+                }
+
+                try {
+                    val body = try {
+                        call.receive<Map<String, String>>()
+                    } catch (e: Exception) {
+                        emptyMap()
+                    }
+                    val reason = body["reason"]
+                    
+                    rejectRegistrationUseCase.execute(
+                        tournamentId = UUID.fromString(tournamentIdStr),
+                        registrationId = UUID.fromString(registrationIdStr),
+                        reason = reason
+                    )
+                    call.respond(HttpStatusCode.OK, mapOf("message" to "Registración rechazada"))
+                } catch (e: NoSuchElementException) {
+                    call.respond(HttpStatusCode.NotFound, mapOf("error" to e.message))
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.message))
+                } catch (e: IllegalStateException) {
+                    call.respond(HttpStatusCode.Conflict, mapOf("error" to e.message))
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("error" to (e.message ?: "Error al rechazar registración")))
                 }
             }
         }

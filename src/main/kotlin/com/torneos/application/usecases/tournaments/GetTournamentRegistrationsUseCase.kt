@@ -16,11 +16,11 @@ class GetTournamentRegistrationsUseCase(
     private val registrationRepository: RegistrationRepository,
     private val teamRepository: TeamRepository
 ) {
-    suspend fun execute(tournamentId: UUID, onlyApproved: Boolean = true): List<RegistrationWithTeamInfo> {
+    suspend fun execute(tournamentId: UUID, status: RegistrationStatus? = null): List<RegistrationWithTeamInfo> {
         val registrations = registrationRepository.findByTournamentId(tournamentId)
         
-        val filteredRegistrations = if (onlyApproved) {
-            registrations.filter { it.status == RegistrationStatus.approved }
+        val filteredRegistrations = if (status != null) {
+            registrations.filter { it.status == status }
         } else {
             registrations
         }

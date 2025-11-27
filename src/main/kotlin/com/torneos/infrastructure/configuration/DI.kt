@@ -49,6 +49,8 @@ fun getAppModule(config: ApplicationConfig) = module {
     single { GetTournamentMatchesUseCase(get()) }
     single { GetTournamentTeamsUseCase(get(), get()) }
     single { GetTournamentRegistrationsUseCase(get(), get()) }
+    single { ApproveRegistrationUseCase(get(), get()) }
+    single { RejectRegistrationUseCase(get()) }
     single { JoinTournamentUseCase(get(), get(), get()) }
     single { FollowTournamentUseCase(get()) }
     single { UnfollowTournamentUseCase(get()) }
