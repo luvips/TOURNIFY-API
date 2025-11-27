@@ -133,6 +133,7 @@ fun Route.matchRoutes() {
 fun Route.tournamentMatchRoutes() {
     val generateBracketUseCase by application.inject<GenerateBracketUseCase>()
     val createMatchUseCase by application.inject<CreateMatchUseCase>()
+    val teamRepository by application.inject<com.torneos.domain.ports.TeamRepository>()
     
     route("/tournaments/{tournamentId}") {
         authenticate("auth-jwt") {
@@ -194,7 +195,21 @@ fun Route.tournamentMatchRoutes() {
                         refereeId = request.refereeId?.let { UUID.fromString(it) }
                     )
                     
-                    call.respond(HttpStatusCode.Created, match.toResponse())
+                    // Cargar nombres de equipos
+                    val homeTeam = match.teamHomeId?.let { teamRepository.findById(it) }
+                    val awayTeam = match.teamAwayId?.let { teamRepository.findById(it) }
+                    
+                    val response = com.torneos.infrastructure.adapters.input.dtos.MatchResponse(
+                        id = match.id.toString(),
+                        homeTeamName = homeTeam?.name ?: "TBD",
+                        awayTeamName = awayTeam?.name ?: "TBD",
+                        scoreHome = match.scoreHome,
+                        scoreAway = match.scoreAway,
+                        status = match.status,
+                        scheduledDate = match.scheduledDate?.toString()
+                    )
+                    
+                    call.respond(HttpStatusCode.Created, response)
                 } catch (e: SecurityException) {
                     call.respond(HttpStatusCode.Forbidden, mapOf("error" to e.message))
                 } catch (e: IllegalArgumentException) {
