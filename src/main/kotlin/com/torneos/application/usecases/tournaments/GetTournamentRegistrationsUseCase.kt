@@ -1,0 +1,33 @@
+package com.torneos.application.usecases.tournaments
+
+import com.torneos.domain.models.TeamRegistration
+import com.torneos.domain.models.Team
+import com.torneos.domain.ports.RegistrationRepository
+import com.torneos.domain.ports.TeamRepository
+import com.torneos.domain.enums.RegistrationStatus
+import java.util.UUID
+
+data class RegistrationWithTeamInfo(
+    val registration: TeamRegistration,
+    val team: Team?
+)
+
+class GetTournamentRegistrationsUseCase(
+    private val registrationRepository: RegistrationRepository,
+    private val teamRepository: TeamRepository
+) {
+    suspend fun execute(tournamentId: UUID, onlyApproved: Boolean = true): List<RegistrationWithTeamInfo> {
+        val registrations = registrationRepository.findByTournamentId(tournamentId)
+        
+        val filteredRegistrations = if (onlyApproved) {
+            registrations.filter { it.status == RegistrationStatus.approved }
+        } else {
+            registrations
+        }
+        
+        return filteredRegistrations.map { registration ->
+            val team = teamRepository.findById(registration.teamId)
+            RegistrationWithTeamInfo(registration, team)
+        }
+    }
+}

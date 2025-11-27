@@ -30,6 +30,7 @@ fun Route.tournamentRoutes() {
     val getFollowedTournamentsUseCase by application.inject<GetFollowedTournamentsUseCase>()
     val getMyTournamentsUseCase by application.inject<GetMyTournamentsUseCase>()
     val getTournamentMatchesUseCase by application.inject<GetTournamentMatchesUseCase>()
+    val getTournamentRegistrationsUseCase by application.inject<GetTournamentRegistrationsUseCase>()
 
     // (Otros use cases como standings/teams se pueden inyectar si se usan)
 
@@ -66,6 +67,17 @@ fun Route.tournamentRoutes() {
                 call.respond(HttpStatusCode.OK, matches.map { it.toResponse() })
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error al obtener partidos"))
+            }
+        }
+
+        // 2.2. Obtener Registraciones de un Torneo (Público)
+        get("/{id}/registrations") {
+            val idParam = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+            try {
+                val registrations = getTournamentRegistrationsUseCase.execute(UUID.fromString(idParam))
+                call.respond(HttpStatusCode.OK, registrations.map { it.toResponse() })
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error al obtener registraciones"))
             }
         }
 

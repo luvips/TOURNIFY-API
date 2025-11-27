@@ -53,3 +53,15 @@ data class TournamentResponse(
 data class JoinTournamentRequest(
     val teamId: String
 )
+
+@Serializable
+data class TeamRegistrationResponse(
+    val id: String,
+    val tournamentId: String,
+    val teamId: String,
+    val teamName: String,
+    val teamLogoUrl: String?,
+    val status: String,
+    val registrationDate: String,
+    val approvedAt: String?
+)

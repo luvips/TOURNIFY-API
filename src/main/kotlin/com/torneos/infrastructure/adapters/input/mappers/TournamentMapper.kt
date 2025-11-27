@@ -1,8 +1,10 @@
 package com.torneos.infrastructure.adapters.input.mappers
 
 import com.torneos.domain.models.Tournament
+import com.torneos.application.usecases.tournaments.RegistrationWithTeamInfo
 import com.torneos.infrastructure.adapters.input.dtos.CreateTournamentRequest
 import com.torneos.infrastructure.adapters.input.dtos.TournamentResponse
+import com.torneos.infrastructure.adapters.input.dtos.TeamRegistrationResponse
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
@@ -61,5 +63,18 @@ fun Tournament.toResponse(): TournamentResponse {
         maxTeams = this.maxTeams,
         currentTeams = this.currentTeams,
         imageUrl = this.imageUrl
+    )
+}
+
+fun RegistrationWithTeamInfo.toResponse(): TeamRegistrationResponse {
+    return TeamRegistrationResponse(
+        id = this.registration.id.toString(),
+        tournamentId = this.registration.tournamentId.toString(),
+        teamId = this.registration.teamId.toString(),
+        teamName = this.team?.name ?: "Unknown Team",
+        teamLogoUrl = this.team?.logoUrl,
+        status = this.registration.status.name,
+        registrationDate = this.registration.registrationDate.toString(),
+        approvedAt = this.registration.approvedAt?.toString()
     )
 }
