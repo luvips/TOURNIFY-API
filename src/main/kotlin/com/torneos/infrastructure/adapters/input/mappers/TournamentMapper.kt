@@ -60,9 +60,17 @@ fun Tournament.toResponse(): TournamentResponse {
         tournamentType = this.tournamentType,
         status = this.status,
         startDate = this.startDate.toString(),
+        endDate = this.endDate?.toString(),
+        registrationDeadline = this.registrationDeadline?.toString(),
+        location = this.location,
         maxTeams = this.maxTeams,
         currentTeams = this.currentTeams,
-        imageUrl = this.imageUrl
+        prizePool = this.prizePool,
+        rulesText = this.rulesText,
+        imageUrl = this.imageUrl,
+        eliminationMode = this.eliminationMode,
+        category = this.category,
+        sportSubType = this.sportSubType
     )
 }
 

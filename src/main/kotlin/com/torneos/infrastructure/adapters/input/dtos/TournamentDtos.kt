@@ -44,9 +44,17 @@ data class TournamentResponse(
     val tournamentType: String,
     val status: String,
     val startDate: String,
+    val endDate: String?,
+    val registrationDeadline: String?,
+    val location: String?,
     val maxTeams: Int,
     val currentTeams: Int,
-    val imageUrl: String?
+    val prizePool: String?,
+    val rulesText: String?,
+    val imageUrl: String?,
+    val eliminationMode: String?,
+    val category: String?,
+    val sportSubType: String?
 )
 
 @Serializable
