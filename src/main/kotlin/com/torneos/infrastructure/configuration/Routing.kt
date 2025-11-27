@@ -15,10 +15,11 @@ fun Application.configureRouting() {
         matchRoutes()
         tournamentMatchRoutes() // Nuevas rutas para generación de bracket
         sportRoutes()
+        groupRoutes()
         
         // Health Check
         get("/") {
-            call.respondText("Tournify Backend is Live! 🚀")
+            call.respondText("Tournify Backend is Live!")
         }
     }
 }

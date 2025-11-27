@@ -6,6 +6,7 @@ import com.torneos.application.usecases.sports.*
 import com.torneos.application.usecases.teams.*
 import com.torneos.application.usecases.tournaments.*
 import com.torneos.application.usecases.users.*
+import com.torneos.application.usecases.groups.*
 import com.torneos.domain.ports.*
 import com.torneos.infrastructure.adapters.output.persistence.repositories.*
 import com.torneos.infrastructure.adapters.output.services.BCryptAuthService
@@ -79,7 +80,12 @@ fun getAppModule(config: ApplicationConfig) = module {
     // Matches
     single { CreateMatchUseCase(get(), get(), get()) }
     single { GenerateBracketUseCase(get(), get(), get()) }
-    single { UpdateMatchResultUseCase(get()) }
+    single { UpdateMatchResultUseCase(get(), get()) }
     single { GetMatchDetailsUseCase(get()) }
     single { DeleteMatchUseCase(get()) }
+
+    //GRupos
+    single { GenerateGroupsUseCase(get(), get()) }
+    single { AssignTeamsToGroupsUseCase(get(), get()) }
+    single { GenerateGroupMatchesUseCase(get(), get(), get()) }
 }

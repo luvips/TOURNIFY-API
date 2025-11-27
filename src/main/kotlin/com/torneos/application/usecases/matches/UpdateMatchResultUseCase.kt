@@ -1,12 +1,18 @@
 package com.torneos.application.usecases.matches
 
+import com.torneos.domain.ports.StandingRepository
 import com.torneos.domain.enums.MatchStatus
 import com.torneos.domain.models.Match
 import com.torneos.domain.ports.MatchRepository
 import java.time.Instant
 import java.util.UUID
 
-class UpdateMatchResultUseCase(private val matchRepository: MatchRepository) {
+class UpdateMatchResultUseCase(
+    private val matchRepository: MatchRepository,
+    private val standingRepository: StandingRepository)
+{
+
+
     suspend fun execute(
         matchId: UUID,
         userId: UUID,
@@ -29,7 +35,16 @@ class UpdateMatchResultUseCase(private val matchRepository: MatchRepository) {
             updatedAt = Instant.now()
         )
 
-        return matchRepository.update(updatedMatch)
+        val savedMatch = matchRepository.update(updatedMatch)
             ?: throw IllegalStateException("Error al guardar")
+
+
+        if (savedMatch.groupId != null && savedMatch.status == MatchStatus.finished) {
+            standingRepository.updateStandings(savedMatch.groupId)
+        }
+
+        return savedMatch
     }
+
+
 }
