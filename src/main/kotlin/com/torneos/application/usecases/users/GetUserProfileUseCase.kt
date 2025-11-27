@@ -7,13 +7,12 @@ import java.util.UUID
 
 class GetUserProfileUseCase(
     private val userRepository: UserRepository,
-    private val fileStorage: FileStoragePort // 👇 Inyectamos el storage
+    private val fileStorage: FileStoragePort
 ) {
     suspend fun execute(userId: UUID): User {
         val user = userRepository.findById(userId)
             ?: throw NoSuchElementException("Usuario no encontrado")
 
-        // Si tiene avatar, convertimos la Key almacenada en una URL firmada válida
         val signedUrl = user.avatarUrl?.let { key ->
             fileStorage.getPresignedUrl(key)
         }

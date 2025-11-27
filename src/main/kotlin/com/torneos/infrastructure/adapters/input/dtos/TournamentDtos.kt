@@ -6,13 +6,13 @@ import kotlinx.serialization.Serializable
 data class CreateTournamentRequest(
     val name: String,
     val description: String? = null,
-    val sportId: String, // UUID como String
+    val sportId: String,
     val sportSubType: String? = null,
     val tournamentType: String,
     val category: String? = null,
     val eliminationMode: String? = null,
     val location: String? = null,
-    val startDate: String, // ISO 8601 String: "2025-12-01T10:00:00Z"
+    val startDate: String,
     val endDate: String? = null,
     val registrationDeadline: String? = null,
     val maxTeams: Int,
@@ -25,7 +25,7 @@ data class CreateTournamentRequest(
     val numberOfGroups: Int? = null,
     val teamsPerGroup: Int? = null,
     val teamsAdvancePerGroup: Int? = null,
-    val sportSettings: String? = null, // JSON como String
+    val sportSettings: String? = null,
     val allowTies: Boolean = false,
     val pointsForWin: Int = 3,
     val pointsForDraw: Int = 1,

@@ -15,7 +15,7 @@ object UsersTable : Table("users") {
     val firstName = varchar("first_name", 50).nullable()
     val lastName = varchar("last_name", 50).nullable()
     val phone = varchar("phone", 20).nullable()
-    val avatarUrl = text("avatar_url").nullable() // Text para URLs largas
+    val avatarUrl = text("avatar_url").nullable()
     
     val isActive = bool("is_active").default(true)
     val emailVerified = bool("email_verified").default(false)

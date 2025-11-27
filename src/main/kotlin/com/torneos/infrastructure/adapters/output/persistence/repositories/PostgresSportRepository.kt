@@ -61,7 +61,6 @@ class PostgresSportRepository : SportRepository {
         if (rows > 0) sport else null
     }
 
-    // 👇 IMPLEMENTAR DELETE
     override suspend fun delete(id: UUID): Boolean = dbQuery {
         SportsTable.deleteWhere { SportsTable.id eq id } > 0
     }

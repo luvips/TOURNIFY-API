@@ -82,7 +82,6 @@ class PostgresTeamRepository : TeamRepository {
                     id = row[TeamMembersTable.id],
                     teamId = row[TeamMembersTable.teamId],
                     userId = row[TeamMembersTable.userId],
-                    // Priorizar nombre/email de la tabla Users si existe, sino usar los de TeamMembers
                     name = row.getOrNull(UsersTable.firstName)?.let { firstName ->
                         val lastName = row.getOrNull(UsersTable.lastName) ?: ""
                         "$firstName $lastName".trim()
@@ -145,7 +144,6 @@ class PostgresTeamRepository : TeamRepository {
             }
     }
 
-    // --- REGISTRATIONS ---
     override suspend fun registerToTournament(registration: TeamRegistration): TeamRegistration = dbQuery {
         TeamRegistrationsTable.insert {
             it[id] = registration.id

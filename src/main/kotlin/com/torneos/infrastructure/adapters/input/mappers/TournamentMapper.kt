@@ -16,7 +16,7 @@ fun CreateTournamentRequest.toDomain(organizerId: UUID): Tournament {
         sportId = UUID.fromString(this.sportId),
         name = this.name,
         description = this.description,
-        sport = "", // El caso de uso se encargará de rellenar esto
+        sport = "",
         sportSubType = this.sportSubType,
         tournamentType = this.tournamentType,
         category = this.category,

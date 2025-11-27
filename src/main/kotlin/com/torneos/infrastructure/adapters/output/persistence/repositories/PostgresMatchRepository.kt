@@ -48,7 +48,6 @@ class PostgresMatchRepository : MatchRepository {
             it[teamAwayId] = match.teamAwayId
             it[scheduledDate] = match.scheduledDate
             it[status] = match.status
-            // ... resto
         }
         match
     }
@@ -81,7 +80,6 @@ class PostgresMatchRepository : MatchRepository {
         if (rows > 0) match else null
     }
 
-    // --- EVENTS (Results) ---
     override suspend fun addMatchEvent(result: MatchResult): MatchResult = dbQuery {
         MatchResultsTable.insert {
             it[id] = result.id

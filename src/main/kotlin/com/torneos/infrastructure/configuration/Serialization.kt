@@ -12,10 +12,8 @@ fun Application.configureSerialization() {
         jackson {
 
             registerModule(JavaTimeModule())
-            // Desactivar serialización de fechas como timestamps
             disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-            // Formatear JSON con indentación (opcional, mejor para debug)
             enable(SerializationFeature.INDENT_OUTPUT)
         }
 

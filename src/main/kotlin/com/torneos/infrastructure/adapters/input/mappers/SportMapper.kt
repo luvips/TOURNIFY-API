@@ -11,7 +11,7 @@ fun CreateSportRequest.toDomain(): Sport {
         category = this.category,
         defaultPlayersPerTeam = this.defaultPlayers,
         defaultMatchDuration = this.defaultDuration,
-        icon = null, // Se maneja subida de imagen aparte
+        icon = null,
         isActive = true
     )
 }

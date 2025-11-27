@@ -15,7 +15,6 @@ import io.ktor.server.config.*
 import org.koin.dsl.module
 
 fun getAppModule(config: ApplicationConfig) = module {
-    // --- INFRASTRUCTURE (Singletons) ---
 
     // Services
     single<AuthServicePort> { BCryptAuthService(config) }
@@ -30,8 +29,7 @@ fun getAppModule(config: ApplicationConfig) = module {
     single<RegistrationRepository> { PostgresRegistrationRepository() }
     single<TournamentGroupRepository> { PostgresTournamentGroupRepository() }
 
-    // --- APPLICATION (Use Cases - Factory/Single) ---
-    
+
     // Auth
     single { LoginUseCase(get(), get()) }
     single { RegisterUserUseCase(get(), get()) }

@@ -131,14 +131,11 @@ fun Route.teamRoutes() {
                     val teamId = UUID.fromString(teamIdStr)
                     val request = call.receive<UpdateTeamRequest>()
                     
-                    // Obtener el equipo existente
                     val existingTeamWithMembers = getTeamDetailsUseCase.execute(teamId, userId)
                     val existingTeam = existingTeamWithMembers.team
                     
-                    // Aplicar actualizaciones
                     val updatedTeam = request.toDomain(teamId, existingTeam)
                     
-                    // Ejecutar actualización con validación de capitán
                     val result = updateTeamUseCase.execute(teamId, updatedTeam, userId)
                     call.respond(HttpStatusCode.OK, result.toResponse())
                 } catch (e: IllegalArgumentException) {
@@ -167,7 +164,7 @@ fun Route.teamRoutes() {
                 }
             }
 
-            // 👇 ELIMINAR MIEMBRO (Expulsar jugador)
+            // ELIMINAR MIEMBRO (Expulsar jugador)
             delete("/{id}/members/{memberId}") {
                 val teamIdStr = call.parameters["id"]
                 val memberIdStr = call.parameters["memberId"]

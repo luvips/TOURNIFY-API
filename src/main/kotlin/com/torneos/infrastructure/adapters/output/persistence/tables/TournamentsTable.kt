@@ -31,7 +31,6 @@ object TournamentsTable : Table("tournaments") {
     val teams_per_group = integer("teams_per_group").nullable()
     val teams_advance_per_group = integer("teams_advance_per_group").nullable()
     val sport_settings = text("sport_settings").default("{}")
-    // Se omite group_config_json porque los campos están aplanados
     val allow_ties = bool("allow_ties").default(false)
     val points_for_win = integer("points_for_win").default(3)
     val points_for_draw = integer("points_for_draw").default(1)

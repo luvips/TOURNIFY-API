@@ -9,7 +9,7 @@ import com.torneos.infrastructure.adapters.input.dtos.SwitchRoleRequest
 import com.torneos.infrastructure.adapters.input.dtos.AuthResponse
 import com.torneos.infrastructure.adapters.input.mappers.toDto
 import io.ktor.http.*
-import io.ktor.http.content.* // Necesario para PartData
+import io.ktor.http.content.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
@@ -29,7 +29,6 @@ fun Route.userRoutes() {
     route("/users") {
         authenticate("auth-jwt") {
 
-            // ... (Tus rutas GET / PUT / POST switch-role se quedan igual) ...
             // 1. Ver mi perfil
             get("/me") {
                 val principal = call.principal<JWTPrincipal>()
@@ -83,7 +82,7 @@ fun Route.userRoutes() {
                 }
             }
 
-            // 4. Subir Avatar (CÓDIGO FINAL DE PRODUCCIÓN)
+            // 4. Subir Avatar
             post("/me/avatar") {
                 val principal = call.principal<JWTPrincipal>()
                 val userId = UUID.fromString(principal?.payload?.getClaim("id")?.asString())
@@ -91,10 +90,9 @@ fun Route.userRoutes() {
                 // Variables para almacenar los datos del archivo
                 var fileName = ""
                 var fileBytes: ByteArray? = null
-                var contentType = "image/jpeg" // Valor por defecto
+                var contentType = "image/jpeg"
 
                 try {
-                    // Procesar la petición Multipart
                     val multipart = call.receiveMultipart()
 
                     multipart.forEachPart { part ->
@@ -111,10 +109,9 @@ fun Route.userRoutes() {
                         return@post
                     }
 
-                    // Llamar al caso de uso real
                     val avatarUrl = updateUserAvatarUseCase.execute(userId, fileName, fileBytes!!, contentType)
 
-                    // Responder con la URL firmada para que el frontend pueda mostrarla inmediatamente
+                    // Responder con la URL firmada para que el frontend pueda mostrarla
                     call.respond(HttpStatusCode.OK, mapOf(
                         "message" to "Avatar actualizado correctamente",
                         "avatarUrl" to avatarUrl

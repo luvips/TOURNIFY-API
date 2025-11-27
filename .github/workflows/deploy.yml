@@ -9,9 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ------------------------------------------------------------------
       # FASE 1: PREPARACIÓN Y COMPILACIÓN
-      # ------------------------------------------------------------------
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -42,13 +40,11 @@ jobs:
       # Verifica que el JAR exista antes de intentar subirlo
       - name: Verify Artifacts
         run: |
-          if [ ! -f "app.jar" ]; then echo "❌ app.jar no encontrado"; exit 1; fi
-          if [ ! -f "src/main/resources/application.conf" ]; then echo "❌ application.conf no encontrado"; exit 1; fi
-          echo "✅ Todos los archivos listos."
+          if [ ! -f "app.jar" ]; then echo " app.jar no encontrado"; exit 1; fi
+          if [ ! -f "src/main/resources/application.conf" ]; then echo " application.conf no encontrado"; exit 1; fi
+          echo "Todos los archivos listos."
 
-      # ------------------------------------------------------------------
-      # FASE 2: DESPLIEGUE A ZONA SEGURA (/tmp)
-      # ------------------------------------------------------------------
+      # FASE 2: DESPLIEGUE A ZONA SEGURA
 
       # Primero detenemos el servicio para liberar memoria
       - name: Stop Service
@@ -70,9 +66,7 @@ jobs:
           source: "app.jar,src/main/resources/application.conf"
           target: "/tmp/deploy"
 
-      # ------------------------------------------------------------------
       # FASE 3: INSTALACIÓN Y ARRANQUE
-      # ------------------------------------------------------------------
 
       # Movemos los archivos de /tmp a /opt/apps/backend y reiniciamos
       - name: Deploy & Start

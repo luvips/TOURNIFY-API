@@ -45,7 +45,7 @@ fun AddMemberRequest.toDomain(teamId: UUID): TeamMember {
     return TeamMember(
         teamId = teamId,
         userId = null,
-        memberName = this.name, // Pasamos lo que venga (null o texto)
+        memberName = this.name, 
         memberEmail = this.email,
         memberPhone = null,
         role = this.role,

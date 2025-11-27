@@ -5,28 +5,28 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CreateMatchRequest(
-    val teamHomeId: String?,      // UUID (puede ser null para TBD)
-    val teamAwayId: String?,      // UUID (puede ser null para TBD)
-    val scheduledDate: String?,   // ISO 8601
+    val teamHomeId: String?,
+    val teamAwayId: String?,
+    val scheduledDate: String?,
     val location: String?,
-    val roundName: String?,       // "Final", "Semifinal", etc.
+    val roundName: String?,
     val roundNumber: Int?,
     val matchNumber: Int?,
-    val groupId: String?,         // UUID (si es fase de grupos)
-    val refereeId: String?        // UUID
+    val groupId: String?,
+    val refereeId: String?
 )
 
 @Serializable
 data class GenerateBracketRequest(
-    val startDate: String?        // ISO 8601 - Fecha de inicio de los partidos
+    val startDate: String?
 )
 
 @Serializable
 data class UpdateMatchResultRequest(
     val scoreHome: Int,
     val scoreAway: Int,
-    val status: MatchStatus, // 'finished', 'live'
-    val winnerId: String?    // UUID del equipo ganador (si aplica)
+    val status: MatchStatus,
+    val winnerId: String?
 )
 
 @Serializable

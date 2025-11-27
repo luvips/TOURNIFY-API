@@ -12,7 +12,6 @@ class BCryptAuthService(config: ApplicationConfig) : AuthServicePort {
     private val jwtSecret = config.property("jwt.secret").getString()
     private val jwtDomain = config.property("jwt.domain").getString()
     private val jwtAudience = config.property("jwt.audience").getString()
-    // Expiración: 24 horas (en milisegundos)
     private val expirationTime = 24 * 60 * 60 * 1000
 
     override fun hashPassword(password: String): String {
