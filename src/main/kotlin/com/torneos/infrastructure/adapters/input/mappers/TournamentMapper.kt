@@ -49,7 +49,7 @@ fun CreateTournamentRequest.toDomain(organizerId: UUID): Tournament {
     )
 }
 
-fun Tournament.toResponse(): TournamentResponse {
+fun Tournament.toResponse(organizerUsername: String? = null): TournamentResponse {
     return TournamentResponse(
         id = this.id.toString(),
         name = this.name,
@@ -57,6 +57,7 @@ fun Tournament.toResponse(): TournamentResponse {
         sportId = this.sportId.toString(),
         sport = this.sport,
         organizerId = this.organizerId.toString(),
+        organizerUsername = organizerUsername,
         tournamentType = this.tournamentType,
         status = this.status,
         startDate = this.startDate.toString(),

@@ -41,6 +41,7 @@ data class TournamentResponse(
     val sportId: String,
     val sport: String?,
     val organizerId: String,
+    val organizerUsername: String?,
     val tournamentType: String,
     val status: String,
     val startDate: String,

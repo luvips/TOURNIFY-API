@@ -60,8 +60,8 @@ fun Route.tournamentRoutes() {
         get("/{id}") {
             val idParam = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
             try {
-                val tournament = getTournamentDetailsUseCase.execute(UUID.fromString(idParam))
-                call.respond(HttpStatusCode.OK, tournament.toResponse())
+                val tournamentWithInfo = getTournamentDetailsUseCase.execute(UUID.fromString(idParam))
+                call.respond(HttpStatusCode.OK, tournamentWithInfo.tournament.toResponse(tournamentWithInfo.organizerUsername))
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.NotFound, mapOf("error" to "Torneo no encontrado"))
             }
