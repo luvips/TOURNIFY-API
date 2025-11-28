@@ -37,7 +37,10 @@ data class MatchResponse(
     val scoreHome: Int?,
     val scoreAway: Int?,
     val status: MatchStatus,
-    val scheduledDate: String?
+    val scheduledDate: String?,
+    val tournamentName: String? = null,
+    val location: String? = null,
+    val roundName: String? = null
 )
 
 @Serializable

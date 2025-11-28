@@ -54,6 +54,9 @@ fun MatchDetails.toResponse(): MatchResponse {
         scoreHome = this.match.scoreHome,
         scoreAway = this.match.scoreAway,
         status = this.match.status,
-        scheduledDate = this.match.scheduledDate?.toString()
+        scheduledDate = this.match.scheduledDate?.toString(),
+        tournamentName = this.tournamentName,
+        location = this.match.location,
+        roundName = this.match.roundName
     )
 }
