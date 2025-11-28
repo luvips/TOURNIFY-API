@@ -58,6 +58,12 @@ class PostgresMatchRepository : MatchRepository {
             .singleOrNull()
     }
 
+    override suspend fun findAll(): List<Match> = dbQuery {
+        MatchesTable.selectAll()
+            .orderBy(MatchesTable.scheduledDate to SortOrder.ASC)
+            .map { it.toMatch() }
+    }
+
     override suspend fun findByTournament(tournamentId: UUID): List<Match> = dbQuery {
         MatchesTable.selectAll().where { MatchesTable.tournamentId eq tournamentId }
             .orderBy(MatchesTable.roundNumber to SortOrder.ASC, MatchesTable.matchNumber to SortOrder.ASC)

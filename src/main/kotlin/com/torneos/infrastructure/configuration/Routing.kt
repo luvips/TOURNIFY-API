@@ -15,6 +15,7 @@ fun Application.configureRouting() {
         tournamentMatchRoutes()
         sportRoutes()
         groupRoutes()
+        refereeRoutes()
         
         // Health Check
         get("/") {

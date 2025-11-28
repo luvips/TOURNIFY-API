@@ -28,6 +28,7 @@ fun getAppModule(config: ApplicationConfig) = module {
     single<MatchRepository> { PostgresMatchRepository() }
     single<RegistrationRepository> { PostgresRegistrationRepository() }
     single<TournamentGroupRepository> { PostgresTournamentGroupRepository() }
+    single<StandingRepository> { PostgresStandingRepository() }
 
 
     // Auth
@@ -56,8 +57,6 @@ fun getAppModule(config: ApplicationConfig) = module {
     single { GetFollowedTournamentsUseCase(get(), get()) }
     single { GetMyTournamentsUseCase(get(), get()) }
     single { UpdateTournamentUseCase(get()) }
-    single<StandingRepository> { PostgresStandingRepository() }
-    single { UpdateTournamentUseCase(get()) }
     single { DeleteTournamentUseCase(get()) }
     single { UpdateTournamentImageUseCase(get(), get()) }
     single { StartTournamentUseCase(get()) }
@@ -81,11 +80,12 @@ fun getAppModule(config: ApplicationConfig) = module {
     // Matches
     single { CreateMatchUseCase(get(), get(), get()) }
     single { GenerateBracketUseCase(get(), get(), get()) }
-    single { UpdateMatchResultUseCase(get(), get()) }
+    single { UpdateMatchResultUseCase(get(), get(), get(), get()) }
     single { GetMatchDetailsUseCase(get(), get(), get()) }
     single { DeleteMatchUseCase(get()) }
+    single { GetRefereeMatchesUseCase(get()) }
 
-    //GRupos
+    //Grupos
     single { GenerateGroupsUseCase(get(), get()) }
     single { AssignTeamsToGroupsUseCase(get(), get()) }
     single { GenerateGroupMatchesUseCase(get(), get(), get()) }
