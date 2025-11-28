@@ -40,6 +40,7 @@ fun getAppModule(config: ApplicationConfig) = module {
     single { UpdateUserProfileUseCase(get()) }
     single { SwitchUserRoleUseCase(get(), get()) }
     single { UpdateUserAvatarUseCase(get(), get()) }
+    single { GetUsersByRoleUseCase(get()) }
     
     // Tournaments
     single { CreateTournamentUseCase(get(), get()) }
@@ -79,9 +80,9 @@ fun getAppModule(config: ApplicationConfig) = module {
     
     // Matches
     single { CreateMatchUseCase(get(), get(), get()) }
-    single { GenerateBracketUseCase(get(), get(), get()) }
+    single { GenerateBracketUseCase(get(), get(), get(), get()) }
     single { UpdateMatchResultUseCase(get(), get(), get(), get()) }
-    single { GetMatchDetailsUseCase(get(), get(), get()) }
+    single { GetMatchDetailsUseCase(get(), get(), get(), get()) }
     single { DeleteMatchUseCase(get()) }
     single { GetRefereeMatchesUseCase(get()) }
 

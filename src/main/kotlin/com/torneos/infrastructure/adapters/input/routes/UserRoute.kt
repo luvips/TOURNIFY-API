@@ -3,7 +3,9 @@ package com.torneos.infrastructure.adapters.input.routes
 import com.torneos.application.usecases.users.GetUserProfileUseCase
 import com.torneos.application.usecases.users.UpdateUserProfileUseCase
 import com.torneos.application.usecases.users.SwitchUserRoleUseCase
-import com.torneos.application.usecases.users.UpdateUserAvatarUseCase // Asegúrate de importar esto
+import com.torneos.application.usecases.users.UpdateUserAvatarUseCase
+import com.torneos.application.usecases.users.GetUsersByRoleUseCase
+import com.torneos.domain.enums.UserRole
 import com.torneos.infrastructure.adapters.input.dtos.UpdateProfileRequest
 import com.torneos.infrastructure.adapters.input.dtos.SwitchRoleRequest
 import com.torneos.infrastructure.adapters.input.dtos.AuthResponse
@@ -23,8 +25,8 @@ fun Route.userRoutes() {
     val getUserProfileUseCase by application.inject<GetUserProfileUseCase>()
     val updateUserProfileUseCase by application.inject<UpdateUserProfileUseCase>()
     val switchUserRoleUseCase by application.inject<SwitchUserRoleUseCase>()
-    // Inyectamos el caso de uso de avatar
     val updateUserAvatarUseCase by application.inject<UpdateUserAvatarUseCase>()
+    val getUsersByRoleUseCase by application.inject<GetUsersByRoleUseCase>()
 
     route("/users") {
         authenticate("auth-jwt") {
@@ -120,6 +122,26 @@ fun Route.userRoutes() {
                 } catch (e: Exception) {
                     e.printStackTrace()
                     call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error al procesar la subida: ${e.message}"))
+                }
+            }
+
+            // 5. Obtener usuarios por rol (para asignar árbitros, etc.)
+            get {
+                val roleParam = call.request.queryParameters["role"]
+                
+                if (roleParam == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Parámetro 'role' requerido"))
+                    return@get
+                }
+                
+                try {
+                    val role = UserRole.valueOf(roleParam.lowercase())
+                    val users = getUsersByRoleUseCase.execute(role)
+                    call.respond(HttpStatusCode.OK, users.map { it.toDto() })
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Rol inválido. Valores permitidos: player, organizer, referee, admin"))
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error al obtener usuarios"))
                 }
             }
         }

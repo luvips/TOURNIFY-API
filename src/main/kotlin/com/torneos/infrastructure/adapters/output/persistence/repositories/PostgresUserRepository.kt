@@ -55,6 +55,11 @@ class PostgresUserRepository : UserRepository {
             .singleOrNull()
     }
 
+    override suspend fun findByRole(role: UserRole): List<User> = dbQuery {
+        UsersTable.selectAll().where { UsersTable.role eq role.name }
+            .map { it.toUser() }
+    }
+
     override suspend fun update(user: User): User? = dbQuery {
         val updatedRows = UsersTable.update({ UsersTable.id eq user.id }) {
             it[firstName] = user.firstName

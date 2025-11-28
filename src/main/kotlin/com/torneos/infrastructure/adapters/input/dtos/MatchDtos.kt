@@ -40,7 +40,15 @@ data class MatchResponse(
     val scheduledDate: String?,
     val tournamentName: String? = null,
     val location: String? = null,
-    val roundName: String? = null
+    val roundName: String? = null,
+    val refereeId: String? = null,
+    val referee: RefereeInfo? = null
+)
+
+@Serializable
+data class RefereeInfo(
+    val id: String,
+    val username: String
 )
 
 @Serializable

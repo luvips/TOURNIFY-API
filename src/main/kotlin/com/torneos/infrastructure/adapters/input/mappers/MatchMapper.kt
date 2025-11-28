@@ -5,6 +5,7 @@ import com.torneos.application.usecases.tournaments.MatchWithTeamNames
 import com.torneos.application.usecases.matches.MatchDetails
 import com.torneos.infrastructure.adapters.input.dtos.MatchResponse
 import com.torneos.infrastructure.adapters.input.dtos.MatchDetailResponse
+import com.torneos.infrastructure.adapters.input.dtos.RefereeInfo
 
 fun Match.toResponse(): MatchResponse {
 
@@ -15,7 +16,8 @@ fun Match.toResponse(): MatchResponse {
         scoreHome = this.scoreHome,
         scoreAway = this.scoreAway,
         status = this.status,
-        scheduledDate = this.scheduledDate?.toString()
+        scheduledDate = this.scheduledDate?.toString(),
+        refereeId = this.refereeId?.toString()
     )
 }
 
@@ -27,7 +29,8 @@ fun MatchWithTeamNames.toResponse(): MatchResponse {
         scoreHome = this.match.scoreHome,
         scoreAway = this.match.scoreAway,
         status = this.match.status,
-        scheduledDate = this.match.scheduledDate?.toString()
+        scheduledDate = this.match.scheduledDate?.toString(),
+        refereeId = this.match.refereeId?.toString()
     )
 }
 
@@ -57,6 +60,8 @@ fun MatchDetails.toResponse(): MatchResponse {
         scheduledDate = this.match.scheduledDate?.toString(),
         tournamentName = this.tournamentName,
         location = this.match.location,
-        roundName = this.match.roundName
+        roundName = this.match.roundName,
+        refereeId = this.match.refereeId?.toString(),
+        referee = this.referee?.let { RefereeInfo(id = it.id.toString(), username = it.username) }
     )
 }

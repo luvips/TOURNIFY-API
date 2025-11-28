@@ -1,11 +1,13 @@
 package com.torneos.application.usecases.matches
 
 import com.torneos.domain.enums.MatchStatus
+import com.torneos.domain.enums.UserRole
 import com.torneos.domain.models.Match
 import com.torneos.domain.models.TeamRegistration
 import com.torneos.domain.ports.MatchRepository
 import com.torneos.domain.ports.TournamentRepository
 import com.torneos.domain.ports.RegistrationRepository
+import com.torneos.domain.ports.UserRepository
 import java.time.Instant
 import java.util.UUID
 import kotlin.math.ceil
@@ -16,7 +18,8 @@ import kotlin.math.pow
 class GenerateBracketUseCase(
     private val matchRepository: MatchRepository,
     private val tournamentRepository: TournamentRepository,
-    private val registrationRepository: RegistrationRepository
+    private val registrationRepository: RegistrationRepository,
+    private val userRepository: UserRepository
 ) {
     suspend fun execute(
         userId: UUID,
@@ -55,10 +58,13 @@ class GenerateBracketUseCase(
             throw IllegalArgumentException("Ya existen partidos generados para este torneo")
         }
         
-        // 6. Generar bracket según el modo de eliminación
+        // 6. Obtener árbitros disponibles para asignación automática
+        val availableReferees = userRepository.findByRole(UserRole.referee)
+        
+        // 7. Generar bracket según el modo de eliminación
         return when (tournament.eliminationMode) {
-            "single" -> generateSingleEliminationBracket(tournamentId, registrations, startDate)
-            "double" -> generateDoubleEliminationBracket(tournamentId, registrations, startDate)
+            "single" -> generateSingleEliminationBracket(tournamentId, registrations, startDate, availableReferees)
+            "double" -> generateDoubleEliminationBracket(tournamentId, registrations, startDate, availableReferees)
             else -> throw IllegalArgumentException("Modo de eliminación no soportado: ${tournament.eliminationMode}")
         }
     }
@@ -69,7 +75,8 @@ class GenerateBracketUseCase(
     private suspend fun generateSingleEliminationBracket(
         tournamentId: UUID,
         registrations: List<TeamRegistration>,
-        startDate: Instant?
+        startDate: Instant?,
+        availableReferees: List<com.torneos.domain.models.User>
     ): List<Match> {
         val teams = registrations.map { it.teamId }
         val numTeams = teams.size
@@ -85,6 +92,7 @@ class GenerateBracketUseCase(
         
         val matches = mutableListOf<Match>()
         var matchNumber = 1
+        var refereeIndex = 0 // Para rotar árbitros
         
         val roundName = getRoundName(numRounds, 1)
         val teamsShuffled = teams.shuffled()
@@ -110,6 +118,15 @@ class GenerateBracketUseCase(
                 else -> null
             }
             
+            // Asignar árbitro si hay disponibles y no es bye
+            val refereeId = if (status != MatchStatus.finished && availableReferees.isNotEmpty()) {
+                val referee = availableReferees[refereeIndex % availableReferees.size]
+                refereeIndex++
+                referee.id
+            } else {
+                null
+            }
+            
             val match = Match(
                 id = UUID.randomUUID(),
                 tournamentId = tournamentId,
@@ -121,7 +138,7 @@ class GenerateBracketUseCase(
                 teamAwayId = teamAway,
                 scheduledDate = startDate,
                 location = null,
-                refereeId = null,
+                refereeId = refereeId,
                 status = status,
                 scoreHome = if (status == MatchStatus.finished && teamHome != null) 1 else null,
                 scoreAway = if (status == MatchStatus.finished && teamAway != null) 1 else null,
@@ -142,6 +159,15 @@ class GenerateBracketUseCase(
             val numMatchesInRound = 2.0.pow(numRounds - round).toInt()
             
             for (matchInRound in 0 until numMatchesInRound) {
+                // Asignar árbitro si hay disponibles
+                val refereeId = if (availableReferees.isNotEmpty()) {
+                    val referee = availableReferees[refereeIndex % availableReferees.size]
+                    refereeIndex++
+                    referee.id
+                } else {
+                    null
+                }
+                
                 val match = Match(
                     id = UUID.randomUUID(),
                     tournamentId = tournamentId,
@@ -153,7 +179,7 @@ class GenerateBracketUseCase(
                     teamAwayId = null,
                     scheduledDate = null,
                     location = null,
-                    refereeId = null,
+                    refereeId = refereeId,
                     status = MatchStatus.scheduled,
                     scoreHome = null,
                     scoreAway = null,
@@ -176,10 +202,11 @@ class GenerateBracketUseCase(
     private suspend fun generateDoubleEliminationBracket(
         tournamentId: UUID,
         registrations: List<TeamRegistration>,
-        startDate: Instant?
+        startDate: Instant?,
+        availableReferees: List<com.torneos.domain.models.User>
     ): List<Match> {
 
-        return generateSingleEliminationBracket(tournamentId, registrations, startDate)
+        return generateSingleEliminationBracket(tournamentId, registrations, startDate, availableReferees)
     }
     
 
