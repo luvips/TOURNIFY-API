@@ -82,7 +82,7 @@ fun getAppModule(config: ApplicationConfig) = module {
     single { CreateMatchUseCase(get(), get(), get()) }
     single { GenerateBracketUseCase(get(), get(), get()) }
     single { UpdateMatchResultUseCase(get(), get()) }
-    single { GetMatchDetailsUseCase(get()) }
+    single { GetMatchDetailsUseCase(get(), get(), get()) }
     single { DeleteMatchUseCase(get()) }
 
     //GRupos

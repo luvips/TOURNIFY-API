@@ -2,7 +2,9 @@ package com.torneos.infrastructure.adapters.input.mappers
 
 import com.torneos.domain.models.Match
 import com.torneos.application.usecases.tournaments.MatchWithTeamNames
+import com.torneos.application.usecases.matches.MatchDetails
 import com.torneos.infrastructure.adapters.input.dtos.MatchResponse
+import com.torneos.infrastructure.adapters.input.dtos.MatchDetailResponse
 
 fun Match.toResponse(): MatchResponse {
 
@@ -18,6 +20,33 @@ fun Match.toResponse(): MatchResponse {
 }
 
 fun MatchWithTeamNames.toResponse(): MatchResponse {
+    return MatchResponse(
+        id = this.match.id.toString(),
+        homeTeamName = this.homeTeamName ?: "TBD",
+        awayTeamName = this.awayTeamName ?: "TBD",
+        scoreHome = this.match.scoreHome,
+        scoreAway = this.match.scoreAway,
+        status = this.match.status,
+        scheduledDate = this.match.scheduledDate?.toString()
+    )
+}
+
+fun MatchDetails.toDetailResponse(): MatchDetailResponse {
+    return MatchDetailResponse(
+        id = this.match.id.toString(),
+        homeTeamName = this.homeTeamName ?: "TBD",
+        awayTeamName = this.awayTeamName ?: "TBD",
+        scoreHome = this.match.scoreHome,
+        scoreAway = this.match.scoreAway,
+        status = this.match.status,
+        scheduledDate = this.match.scheduledDate?.toString(),
+        tournamentName = this.tournamentName,
+        location = this.match.location,
+        roundName = this.match.roundName
+    )
+}
+
+fun MatchDetails.toResponse(): MatchResponse {
     return MatchResponse(
         id = this.match.id.toString(),
         homeTeamName = this.homeTeamName ?: "TBD",
