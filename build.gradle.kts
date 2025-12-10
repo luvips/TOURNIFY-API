@@ -54,6 +54,9 @@ dependencies {
     implementation("io.ktor:ktor-server-cors:${ktor_version}")
 
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.0")
+    
+    // Gson para serialización de arrays en JSON
+    implementation("com.google.code.gson:gson:2.10.1")
 }
 
 tasks {

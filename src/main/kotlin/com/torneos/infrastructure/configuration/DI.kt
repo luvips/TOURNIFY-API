@@ -7,7 +7,9 @@ import com.torneos.application.usecases.teams.*
 import com.torneos.application.usecases.tournaments.*
 import com.torneos.application.usecases.users.*
 import com.torneos.application.usecases.groups.*
+import com.torneos.application.usecases.standings.*
 import com.torneos.domain.ports.*
+import com.torneos.domain.services.*
 import com.torneos.infrastructure.adapters.output.persistence.repositories.*
 import com.torneos.infrastructure.adapters.output.services.BCryptAuthService
 import com.torneos.infrastructure.adapters.output.services.S3Service
@@ -90,4 +92,28 @@ fun getAppModule(config: ApplicationConfig) = module {
     single { GenerateGroupsUseCase(get(), get()) }
     single { AssignTeamsToGroupsUseCase(get(), get()) }
     single { GenerateGroupMatchesUseCase(get(), get(), get()) }
+
+    // ========== NUEVOS USE CASES: ESTRUCTURAS DE DATOS ==========
+    
+    // Domain Services (Singletons)
+    single { BracketService() }
+    
+    // Árbol (Tree): Visualización de bracket
+    single { GetBracketTreeUseCase(get(), get()) }
+    
+    // Cola (Queue): Lista de espera de equipos
+    single { GetWaitingQueueUseCase() }
+    single { WithdrawFromTournamentUseCase(get(), get()) }
+    
+    // Pila (Stack): Deshacer resultados
+    single { UndoMatchResultUseCase(get(), get(), get(), get()) }
+    
+    // Arrays: Marcador por sets
+    single { UpdateMatchResultWithSetsUseCase(get(), get(), get(), get()) }
+    
+    // Conjunto (Set): Validación de jugadores únicos
+    single { ValidateUniquePlayersUseCase(get(), get()) }
+    
+    // Diccionario (Map): Caché de standings
+    single { GetCachedStandingsUseCase(get()) }
 }

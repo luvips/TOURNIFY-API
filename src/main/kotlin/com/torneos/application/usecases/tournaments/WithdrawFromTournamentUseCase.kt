@@ -1,0 +1,72 @@
+package com.torneos.application.usecases.tournaments
+
+import com.torneos.domain.enums.PaymentStatus
+import com.torneos.domain.enums.RegistrationStatus
+import com.torneos.domain.models.TeamRegistration
+import com.torneos.domain.ports.RegistrationRepository
+import com.torneos.domain.ports.TournamentRepository
+import com.torneos.domain.services.TournamentWaitingQueueService
+import java.util.UUID
+
+/**
+ * Caso de uso para retirar un equipo del torneo y procesar la cola de espera
+ * Demuestra el uso de COLA (Queue) con operación dequeue automática
+ */
+class WithdrawFromTournamentUseCase(
+    private val registrationRepository: RegistrationRepository,
+    private val tournamentRepository: TournamentRepository
+) {
+
+    data class WithdrawResult(
+        val success: Boolean,
+        val message: String,
+        val nextTeamProcessed: Boolean = false,
+        val nextTeamId: UUID? = null
+    )
+
+    suspend fun execute(tournamentId: UUID, teamId: UUID, userId: UUID): WithdrawResult {
+        val tournament = tournamentRepository.findById(tournamentId)
+            ?: throw IllegalArgumentException("Torneo no existe")
+
+        // Verificar si el equipo está inscrito
+        val registration = registrationRepository.findByTournamentAndTeam(tournamentId, teamId)
+            ?: throw IllegalArgumentException("El equipo no está inscrito en este torneo")
+
+        // Eliminar la inscripción
+        registrationRepository.delete(registration.id)
+
+        // Procesar la cola de espera (DEQUEUE - FIFO)
+        val nextInQueue = TournamentWaitingQueueService.dequeue(tournamentId)
+
+        if (nextInQueue != null) {
+            // Inscribir automáticamente al siguiente equipo en la cola
+            val newRegistration = TeamRegistration(
+                id = UUID.randomUUID(),
+                tournamentId = tournamentId,
+                teamId = nextInQueue.teamId,
+                groupId = null,
+                status = if (tournament.requiresApproval) RegistrationStatus.pending else RegistrationStatus.approved,
+                paymentStatus = PaymentStatus.unpaid,
+                additionalInfo = null,
+                seedNumber = null,
+                approvedAt = null,
+                approvedBy = null
+            )
+
+            registrationRepository.create(newRegistration)
+
+            return WithdrawResult(
+                success = true,
+                message = "Equipo retirado. Siguiente equipo en cola inscrito automáticamente",
+                nextTeamProcessed = true,
+                nextTeamId = nextInQueue.teamId
+            )
+        }
+
+        return WithdrawResult(
+            success = true,
+            message = "Equipo retirado exitosamente. No hay equipos en cola de espera",
+            nextTeamProcessed = false
+        )
+    }
+}

@@ -1,0 +1,117 @@
+{
+  "info": {
+    "_postman_id": "b7e1c1e0-1234-4a5b-9cde-abcdef123456",
+    "name": "TOURNIFY-API Data Structures Demo",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Actualizar resultado con sets (Arrays)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"homeSets\": [6, 4, 6],\n  \"awaySets\": [3, 6, 2],\n  \"notes\": \"Partido jugado en cancha central\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/matches/REEMPLAZAR_MATCH_ID/result-with-sets",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["matches", "REEMPLAZAR_MATCH_ID", "result-with-sets"]
+        }
+      }
+    },
+    {
+      "name": "Unirse a torneo (Queue)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"teamId\": \"b1a2c3d4-e5f6-7890-1234-56789abcdef0\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/tournaments/REEMPLAZAR_TOURNAMENT_ID/join",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["tournaments", "REEMPLAZAR_TOURNAMENT_ID", "join"]
+        }
+      }
+    },
+    {
+      "name": "Deshacer resultado (Stack)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"123e4567-e89b-12d3-a456-426614174000\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/matches/REEMPLAZAR_MATCH_ID/undo",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["matches", "REEMPLAZAR_MATCH_ID", "undo"]
+        }
+      }
+    },
+    {
+      "name": "Validar jugadores únicos (Set)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/tournaments/REEMPLAZAR_TOURNAMENT_ID/validate-players",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["tournaments", "REEMPLAZAR_TOURNAMENT_ID", "validate-players"]
+        }
+      }
+    },
+    {
+      "name": "Consultar standings cacheados (Map)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/tournaments/groups/REEMPLAZAR_GROUP_ID/standings/cached",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["tournaments", "groups", "REEMPLAZAR_GROUP_ID", "standings", "cached"]
+        }
+      }
+    },
+    {
+      "name": "Consultar árbol de brackets (Tree)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/matches/bracket/REEMPLAZAR_TOURNAMENT_ID/tree",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["matches", "bracket", "REEMPLAZAR_TOURNAMENT_ID", "tree"]
+        }
+      }
+    }
+  ]
+}

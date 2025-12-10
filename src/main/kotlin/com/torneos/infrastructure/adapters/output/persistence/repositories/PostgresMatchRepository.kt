@@ -1,5 +1,7 @@
 package com.torneos.infrastructure.adapters.output.persistence.repositories
 
+import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.torneos.domain.models.GroupStanding
 import com.torneos.domain.models.Match
 import com.torneos.domain.models.MatchResult
@@ -14,30 +16,76 @@ import java.util.UUID
 
 class PostgresMatchRepository : MatchRepository {
 
+    private val gson = Gson()
 
-    private fun ResultRow.toMatch() = Match(
-        id = this[MatchesTable.id],
-        tournamentId = this[MatchesTable.tournamentId],
-        groupId = this[MatchesTable.groupId],
-        matchNumber = this[MatchesTable.matchNumber],
-        roundName = this[MatchesTable.roundName],
-        roundNumber = this[MatchesTable.roundNumber],
-        teamHomeId = this[MatchesTable.teamHomeId],
-        teamAwayId = this[MatchesTable.teamAwayId],
-        scheduledDate = this[MatchesTable.scheduledDate],
-        location = this[MatchesTable.location],
-        refereeId = this[MatchesTable.refereeId],
-        status = this[MatchesTable.status],
-        scoreHome = this[MatchesTable.scoreHome],
-        scoreAway = this[MatchesTable.scoreAway],
-        winnerId = this[MatchesTable.winnerId],
-        matchDataJson = this[MatchesTable.matchData],
-        notes = this[MatchesTable.notes],
-        startedAt = this[MatchesTable.startedAt],
-        finishedAt = this[MatchesTable.finishedAt],
-        createdAt = this[MatchesTable.createdAt],
-        updatedAt = this[MatchesTable.updatedAt]
-    )
+    /**
+     * Deserializa el JSON matchData para extraer los arrays de sets
+     * IMPORTANTE: No se crean columnas nuevas, se usa el campo matchData existente
+     */
+    private fun parseMatchData(matchDataJson: String?): Pair<List<Int>, List<Int>> {
+        if (matchDataJson == null) return Pair(emptyList(), emptyList())
+        
+        return try {
+            val jsonObject = gson.fromJson(matchDataJson, JsonObject::class.java)
+            val homeSets = jsonObject?.getAsJsonArray("homeSets")?.map { it.asInt } ?: emptyList()
+            val awaySets = jsonObject?.getAsJsonArray("awaySets")?.map { it.asInt } ?: emptyList()
+            Pair(homeSets, awaySets)
+        } catch (e: Exception) {
+            Pair(emptyList(), emptyList())
+        }
+    }
+
+    /**
+     * Serializa los arrays de sets dentro del JSON matchData
+     */
+    private fun serializeMatchData(match: Match): String {
+        return try {
+            val existingData = if (match.matchDataJson != null) {
+                gson.fromJson(match.matchDataJson, JsonObject::class.java) ?: JsonObject()
+            } else {
+                JsonObject()
+            }
+            
+            // Agregar o actualizar los arrays de sets
+            existingData.add("homeSets", gson.toJsonTree(match.homeSets))
+            existingData.add("awaySets", gson.toJsonTree(match.awaySets))
+            
+            gson.toJson(existingData)
+        } catch (e: Exception) {
+            match.matchDataJson ?: "{}"
+        }
+    }
+
+    private fun ResultRow.toMatch(): Match {
+        val matchDataJson = this[MatchesTable.matchData]
+        val (homeSets, awaySets) = parseMatchData(matchDataJson)
+        
+        return Match(
+            id = this[MatchesTable.id],
+            tournamentId = this[MatchesTable.tournamentId],
+            groupId = this[MatchesTable.groupId],
+            matchNumber = this[MatchesTable.matchNumber],
+            roundName = this[MatchesTable.roundName],
+            roundNumber = this[MatchesTable.roundNumber],
+            teamHomeId = this[MatchesTable.teamHomeId],
+            teamAwayId = this[MatchesTable.teamAwayId],
+            scheduledDate = this[MatchesTable.scheduledDate],
+            location = this[MatchesTable.location],
+            refereeId = this[MatchesTable.refereeId],
+            status = this[MatchesTable.status],
+            scoreHome = this[MatchesTable.scoreHome],
+            scoreAway = this[MatchesTable.scoreAway],
+            winnerId = this[MatchesTable.winnerId],
+            matchDataJson = matchDataJson,
+            notes = this[MatchesTable.notes],
+            startedAt = this[MatchesTable.startedAt],
+            finishedAt = this[MatchesTable.finishedAt],
+            createdAt = this[MatchesTable.createdAt],
+            updatedAt = this[MatchesTable.updatedAt],
+            homeSets = homeSets,
+            awaySets = awaySets
+        )
+    }
 
     override suspend fun create(match: Match): Match = dbQuery {
         MatchesTable.insert {
@@ -76,12 +124,16 @@ class PostgresMatchRepository : MatchRepository {
     }
 
     override suspend fun update(match: Match): Match? = dbQuery {
+        // Serializar los arrays de sets en el JSON antes de guardar
+        val updatedMatchData = serializeMatchData(match)
+        
         val rows = MatchesTable.update({ MatchesTable.id eq match.id }) {
             it[scoreHome] = match.scoreHome
             it[scoreAway] = match.scoreAway
             it[status] = match.status
             it[winnerId] = match.winnerId
             it[finishedAt] = match.finishedAt
+            it[matchData] = updatedMatchData  // Guardar los sets en el JSON existente
         }
         if (rows > 0) match else null
     }

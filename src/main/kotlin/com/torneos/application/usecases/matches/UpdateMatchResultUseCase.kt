@@ -7,6 +7,7 @@ import com.torneos.domain.models.Match
 import com.torneos.domain.ports.MatchRepository
 import com.torneos.domain.ports.TournamentRepository
 import com.torneos.domain.ports.UserRepository
+import com.torneos.domain.services.MatchHistoryStack
 import java.time.Instant
 import java.util.UUID
 
@@ -56,6 +57,9 @@ class UpdateMatchResultUseCase(
             }
         }
 
+        // GUARDAR ESTADO ANTERIOR EN LA PILA (PUSH) antes de modificar
+        MatchHistoryStack.push(match, userId)
+
         val updatedMatch = match.copy(
             scoreHome = scoreHome,
             scoreAway = scoreAway,
@@ -70,6 +74,9 @@ class UpdateMatchResultUseCase(
 
         if (savedMatch.groupId != null && savedMatch.status == MatchStatus.finished) {
             standingRepository.updateStandings(savedMatch.groupId)
+            
+            // Invalidar caché de standings cuando se actualiza un partido (USO DE MAP)
+            com.torneos.domain.services.StandingsCache.invalidate(savedMatch.groupId)
         }
 
         return savedMatch

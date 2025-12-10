@@ -6,6 +6,7 @@ import com.torneos.domain.models.TeamRegistration
 import com.torneos.domain.ports.TeamRepository
 import com.torneos.domain.ports.TournamentRepository
 import com.torneos.domain.ports.RegistrationRepository
+import com.torneos.domain.services.TournamentWaitingQueueService
 import java.util.UUID
 
 class JoinTournamentUseCase(
@@ -13,7 +14,15 @@ class JoinTournamentUseCase(
     private val tournamentRepository: TournamentRepository,
     private val registrationRepository: RegistrationRepository
 ) {
-    suspend fun execute(userId: UUID, tournamentId: UUID, teamId: UUID) {
+    
+    data class JoinResult(
+        val success: Boolean,
+        val message: String,
+        val isInWaitingQueue: Boolean = false,
+        val queuePosition: Int? = null
+    )
+    
+    suspend fun execute(userId: UUID, tournamentId: UUID, teamId: UUID): JoinResult {
         val tournament = tournamentRepository.findById(tournamentId)
             ?: throw IllegalArgumentException("Torneo no existe")
 
@@ -30,6 +39,35 @@ class JoinTournamentUseCase(
             throw IllegalArgumentException("El equipo ya está inscrito en este torneo")
         }
 
+        // Verificar si ya está en la cola de espera
+        if (TournamentWaitingQueueService.isInQueue(tournamentId, teamId)) {
+            val position = TournamentWaitingQueueService.getPosition(tournamentId, teamId)
+            return JoinResult(
+                success = false,
+                message = "El equipo ya está en la lista de espera",
+                isInWaitingQueue = true,
+                queuePosition = position
+            )
+        }
+
+        // Verificar si el torneo está lleno
+        if (tournament.currentTeams >= tournament.maxTeams) {
+            // Agregar a la cola de espera (uso de QUEUE)
+            val enqueued = TournamentWaitingQueueService.enqueue(tournamentId, teamId, userId)
+            if (enqueued) {
+                val position = TournamentWaitingQueueService.getPosition(tournamentId, teamId)
+                return JoinResult(
+                    success = true,
+                    message = "Torneo lleno. Equipo agregado a la lista de espera",
+                    isInWaitingQueue = true,
+                    queuePosition = position
+                )
+            } else {
+                throw IllegalStateException("No se pudo agregar a la lista de espera")
+            }
+        }
+
+        // Inscribir normalmente si hay espacio
         val registration = TeamRegistration(
             id = UUID.randomUUID(),
             tournamentId = tournamentId,
@@ -44,5 +82,11 @@ class JoinTournamentUseCase(
         )
 
         registrationRepository.create(registration)
+        
+        return JoinResult(
+            success = true,
+            message = "Equipo inscrito exitosamente",
+            isInWaitingQueue = false
+        )
     }
 }
