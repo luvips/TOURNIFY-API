@@ -15,18 +15,15 @@ class SwitchUserRoleUseCase(
         val user = userRepository.findById(userId)
             ?: throw NoSuchElementException("Usuario no encontrado")
 
-        // Validar que el rol sea válido
         if (newRole !in listOf(UserRole.player, UserRole.organizer, UserRole.referee)) {
             throw IllegalArgumentException("Rol no válido")
         }
 
-        // Actualizar el rol del usuario
         val updatedUser = user.copy(role = newRole)
         
         val savedUser = userRepository.update(updatedUser)
             ?: throw IllegalStateException("Error al actualizar rol")
 
-        // Generar nuevo token con el rol actualizado
         val newToken = authService.generateToken(savedUser.id.toString(), savedUser.role.name)
 
         return Pair(newToken, savedUser)

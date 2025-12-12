@@ -28,7 +28,6 @@ fun Route.userRoutes() {
     val updateUserAvatarUseCase by application.inject<UpdateUserAvatarUseCase>()
     val getUsersByRoleUseCase by application.inject<GetUsersByRoleUseCase>()
 
-    route("/users") {
         authenticate("auth-jwt") {
 
             // 1. Ver mi perfil
@@ -41,7 +40,6 @@ fun Route.userRoutes() {
                     call.respond(HttpStatusCode.OK, user.toDto())
                 } catch (e: Exception) {
                     call.respond(HttpStatusCode.NotFound, mapOf("error" to "Usuario no encontrado"))
-                }
             }
 
             // 2. Actualizar perfil
@@ -61,7 +59,6 @@ fun Route.userRoutes() {
                     call.respond(HttpStatusCode.OK, updatedUser.toDto())
                 } catch (e: Exception) {
                     call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Error al actualizar"))
-                }
             }
 
             // 3. Cambiar de rol
@@ -81,12 +78,10 @@ fun Route.userRoutes() {
                     call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.message))
                 } catch (e: Exception) {
                     call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error al cambiar rol"))
-                }
             }
 
             // 4. Subir Avatar
             post("/me/avatar") {
-                val principal = call.principal<JWTPrincipal>()
                 val userId = UUID.fromString(principal?.payload?.getClaim("id")?.asString())
 
                 // Variables para almacenar los datos del archivo
@@ -110,7 +105,6 @@ fun Route.userRoutes() {
                         call.respond(HttpStatusCode.BadRequest, mapOf("error" to "No se envió ninguna imagen"))
                         return@post
                     }
-
                     val avatarUrl = updateUserAvatarUseCase.execute(userId, fileName, fileBytes!!, contentType)
 
                     // Responder con la URL firmada para que el frontend pueda mostrarla
@@ -122,7 +116,6 @@ fun Route.userRoutes() {
                 } catch (e: Exception) {
                     e.printStackTrace()
                     call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error al procesar la subida: ${e.message}"))
-                }
             }
 
             // 5. Obtener usuarios por rol (para asignar árbitros, etc.)

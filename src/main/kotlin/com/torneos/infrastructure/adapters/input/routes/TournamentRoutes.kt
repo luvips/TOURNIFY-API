@@ -22,7 +22,6 @@ import java.time.format.DateTimeParseException
 import java.util.UUID
 
 fun Route.tournamentRoutes() {
-    // Inyección de dependencias
     val createTournamentUseCase by application.inject<CreateTournamentUseCase>()
     val getTournamentsUseCase by application.inject<GetTournamentsUseCase>()
     val getTournamentDetailsUseCase by application.inject<GetTournamentDetailsUseCase>()
@@ -44,7 +43,6 @@ fun Route.tournamentRoutes() {
 
     route("/tournaments") {
 
-        // 1. Listar Torneos
         get {
             try {
                 val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
@@ -56,7 +54,6 @@ fun Route.tournamentRoutes() {
             }
         }
 
-        // 2. Ver Detalle
         get("/{id}") {
             val idParam = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
             try {
@@ -67,7 +64,6 @@ fun Route.tournamentRoutes() {
             }
         }
 
-        // 2.1. Obtener Partidos de un Torneo
         get("/{id}/matches") {
             val idParam = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
             try {
@@ -78,7 +74,6 @@ fun Route.tournamentRoutes() {
             }
         }
 
-        // 2.2. Obtener Registraciones de un Torneo
         get("/{id}/registrations") {
             val idParam = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
             val statusParam = call.request.queryParameters["status"]
@@ -100,7 +95,6 @@ fun Route.tournamentRoutes() {
 
         authenticate("auth-jwt") {
 
-            // 3. Crear Torneo
             post {
                 val userIdStr = call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()
                 val userRole = call.principal<JWTPrincipal>()?.payload?.getClaim("role")?.asString()
@@ -112,7 +106,6 @@ fun Route.tournamentRoutes() {
                 }
 
                 try {
-                    // Verificamos si es una petición Multipart
                     if (call.request.contentType().match(ContentType.MultiPart.FormData)) {
 
                         val multipart = call.receiveMultipart()
@@ -144,11 +137,9 @@ fun Route.tournamentRoutes() {
                             return@post
                         }
 
-                        // 1. Crear el torneo en BD
                         val domainTournament = createRequest!!.toDomain(organizerId = UUID.fromString(userIdStr))
                         var createdTournament = createTournamentUseCase.execute(domainTournament)
 
-                        // 2. Si venía imagen, subirla y actualizar
                         if (fileBytes != null) {
                             val imageUrl = updateTournamentImageUseCase.execute(
                                 tournamentId = createdTournament.id,

@@ -68,12 +68,10 @@ class PostgresTeamRepository : TeamRepository {
     }
 
     override suspend fun getTeamWithMembers(teamId: UUID): TeamWithMembers? = dbQuery {
-        // Obtener el equipo
         val team = TeamsTable.selectAll().where { TeamsTable.id eq teamId }
             .map { it.toTeam() }
             .singleOrNull() ?: return@dbQuery null
 
-        // Obtener miembros con JOIN a Users para obtener nombre y email
         val members = (TeamMembersTable leftJoin UsersTable)
             .selectAll()
             .where { TeamMembersTable.teamId eq teamId }
@@ -106,7 +104,6 @@ class PostgresTeamRepository : TeamRepository {
             .count() > 0
     }
     
-    // --- MEMBERS ---
     override suspend fun addMember(member: TeamMember): TeamMember = dbQuery {
         TeamMembersTable.insert {
             it[id] = member.id

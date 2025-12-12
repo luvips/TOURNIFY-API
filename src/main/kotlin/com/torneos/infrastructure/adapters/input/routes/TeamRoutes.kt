@@ -1,4 +1,3 @@
-package com.torneos.infrastructure.adapters.input.routes
 
 import com.torneos.application.usecases.teams.CreateTeamUseCase
 import com.torneos.application.usecases.teams.AddMemberUseCase
@@ -7,7 +6,6 @@ import com.torneos.application.usecases.teams.GetMyTeamsUseCase
 import com.torneos.application.usecases.teams.GetTeamDetailsUseCase
 import com.torneos.application.usecases.teams.RemoveMemberUseCase
 import com.torneos.application.usecases.teams.UpdateTeamUseCase
-import com.torneos.infrastructure.adapters.input.dtos.AddMemberRequest
 import com.torneos.infrastructure.adapters.input.dtos.CreateTeamRequest
 import com.torneos.infrastructure.adapters.input.dtos.UpdateTeamRequest
 import com.torneos.infrastructure.adapters.input.mappers.toDomain
@@ -34,7 +32,6 @@ fun Route.teamRoutes() {
     route("/teams") {
         authenticate("auth-jwt") {
 
-            // Mis equipos
             get("/my") {
                 val principal = call.principal<JWTPrincipal>()
                 val userId = UUID.fromString(principal?.payload?.getClaim("id")?.asString())
@@ -45,7 +42,6 @@ fun Route.teamRoutes() {
 
             // Obtener detalles de un equipo con sus miembros
             get("/{id}") {
-                val principal = call.principal<JWTPrincipal>()
                 val userId = UUID.fromString(principal?.payload?.getClaim("id")?.asString())
                 
                 val teamIdStr = call.parameters["id"]
@@ -60,7 +56,6 @@ fun Route.teamRoutes() {
                     val teamWithMembers = getTeamDetailsUseCase.execute(teamId, userId)
                     call.respond(HttpStatusCode.OK, teamWithMembers.toResponse())
                 } catch (e: IllegalArgumentException) {
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "ID de equipo inválido"))
                 } catch (e: NoSuchElementException) {
                     call.respond(HttpStatusCode.NotFound, mapOf("error" to "Equipo no encontrado"))
                 } catch (e: SecurityException) {
@@ -80,7 +75,6 @@ fun Route.teamRoutes() {
 
                 call.respond(HttpStatusCode.Created, team.toResponse())
             }
-
             // Agregar miembro
             post("/{id}/members") {
                 val principal = call.principal<JWTPrincipal>()
@@ -128,7 +122,6 @@ fun Route.teamRoutes() {
                 }
                 
                 try {
-                    val teamId = UUID.fromString(teamIdStr)
                     val request = call.receive<UpdateTeamRequest>()
                     
                     val existingTeamWithMembers = getTeamDetailsUseCase.execute(teamId, userId)

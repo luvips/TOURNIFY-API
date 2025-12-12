@@ -21,7 +21,6 @@ import java.time.Instant
 import java.util.UUID
 
 fun Route.matchRoutes() {
-    // Inyección de Casos de Uso
     val createMatchUseCase by application.inject<CreateMatchUseCase>()
     val generateBracketUseCase by application.inject<GenerateBracketUseCase>()
     val updateMatchResultUseCase by application.inject<UpdateMatchResultUseCase>()
@@ -30,7 +29,6 @@ fun Route.matchRoutes() {
     
     route("/matches") {
 
-        // 1. Ver detalle de un partido
         get("/{id}") {
             val idParam = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
             try {
@@ -43,7 +41,6 @@ fun Route.matchRoutes() {
 
         authenticate("auth-jwt") {
             
-            // 2. Crear Partido Manual
             post {
                 val userId = UUID.fromString(call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString())
                 
@@ -77,7 +74,6 @@ fun Route.matchRoutes() {
                 }
             }
             
-            // 3. Actualizar Resultado
             put("/{id}/result") {
                 val matchIdParam = call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
                 val userId = UUID.fromString(call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString())
@@ -102,7 +98,6 @@ fun Route.matchRoutes() {
                 }
             }
             
-            // 4. Eliminar Partido
             delete("/{id}") {
                 val idParam = call.parameters["id"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
 

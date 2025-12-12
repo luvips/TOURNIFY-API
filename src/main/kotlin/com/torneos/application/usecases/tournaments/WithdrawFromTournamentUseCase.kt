@@ -8,10 +8,6 @@ import com.torneos.domain.ports.TournamentRepository
 import com.torneos.domain.services.TournamentWaitingQueueService
 import java.util.UUID
 
-/**
- * Caso de uso para retirar un equipo del torneo y procesar la cola de espera
- * Demuestra el uso de COLA (Queue) con operación dequeue automática
- */
 class WithdrawFromTournamentUseCase(
     private val registrationRepository: RegistrationRepository,
     private val tournamentRepository: TournamentRepository
@@ -28,18 +24,14 @@ class WithdrawFromTournamentUseCase(
         val tournament = tournamentRepository.findById(tournamentId)
             ?: throw IllegalArgumentException("Torneo no existe")
 
-        // Verificar si el equipo está inscrito
         val registration = registrationRepository.findByTournamentAndTeam(tournamentId, teamId)
             ?: throw IllegalArgumentException("El equipo no está inscrito en este torneo")
 
-        // Eliminar la inscripción
         registrationRepository.delete(registration.id)
 
-        // Procesar la cola de espera (DEQUEUE - FIFO)
         val nextInQueue = TournamentWaitingQueueService.dequeue(tournamentId)
 
         if (nextInQueue != null) {
-            // Inscribir automáticamente al siguiente equipo en la cola
             val newRegistration = TeamRegistration(
                 id = UUID.randomUUID(),
                 tournamentId = tournamentId,

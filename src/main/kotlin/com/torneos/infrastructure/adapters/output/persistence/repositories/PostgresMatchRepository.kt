@@ -18,10 +18,6 @@ class PostgresMatchRepository : MatchRepository {
 
     private val gson = Gson()
 
-    /**
-     * Deserializa el JSON matchData para extraer los arrays de sets
-     * IMPORTANTE: No se crean columnas nuevas, se usa el campo matchData existente
-     */
     private fun parseMatchData(matchDataJson: String?): Pair<List<Int>, List<Int>> {
         if (matchDataJson == null) return Pair(emptyList(), emptyList())
         
@@ -35,9 +31,6 @@ class PostgresMatchRepository : MatchRepository {
         }
     }
 
-    /**
-     * Serializa los arrays de sets dentro del JSON matchData
-     */
     private fun serializeMatchData(match: Match): String {
         return try {
             val existingData = if (match.matchDataJson != null) {

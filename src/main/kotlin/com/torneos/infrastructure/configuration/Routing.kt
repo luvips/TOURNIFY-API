@@ -17,11 +17,9 @@ fun Application.configureRouting() {
         groupRoutes()
         refereeRoutes()
         
-        // ========== NUEVAS RUTAS: ESTRUCTURAS DE DATOS ==========
-        dataStructuresMatchRoutes()      // Árbol, Pila, Arrays
-        dataStructuresTournamentRoutes()  // Cola, Conjunto, Diccionario
+        dataStructuresMatchRoutes()
+        dataStructuresTournamentRoutes()
         
-        // Health Check
         get("/") {
             call.respondText("Tournify Backend is Live!")
         }

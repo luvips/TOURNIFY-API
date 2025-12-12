@@ -4,15 +4,6 @@ import com.torneos.domain.enums.MatchStatus
 import java.time.Instant
 import java.util.UUID
 
-/**
- * Modelo de dominio para Match.
- * 
- * Uso de Estructura de Datos: ARREGLOS (Arrays/Lists)
- * - homeSets y awaySets son listas de puntajes por set
- * - Ejemplo para tenis/voley: [6, 4, 6] significa ganó los sets 1 y 3
- * - Estas propiedades NO se persisten como columnas nuevas
- * - Se serializan dentro del JSON matchDataJson existente
- */
 data class Match(
     val id: UUID = UUID.randomUUID(),
     val tournamentId: UUID,
@@ -34,7 +25,7 @@ data class Match(
     val scoreAway: Int?,
     val winnerId: UUID?,
     
-    val matchDataJson: String = "{}", // JSONB - contiene los sets y otros datos
+    val matchDataJson: String = "{}",
     val notes: String?,
     
     val startedAt: Instant?,
@@ -42,14 +33,11 @@ data class Match(
     val createdAt: Instant = Instant.now(),
     val updatedAt: Instant = Instant.now(),
     
-    // Propiedades transitorias para manejar sets (ARREGLOS)
-    // NO son columnas de BD, se extraen/guardan en matchDataJson
+
     val homeSets: List<Int> = emptyList(),
     val awaySets: List<Int> = emptyList()
 ) {
-    /**
-     * Calcula el marcador total a partir de los sets (sets ganados)
-     */
+
     fun calculateScoreFromSets(): Pair<Int, Int> {
         var homeWins = 0
         var awayWins = 0
@@ -68,10 +56,7 @@ data class Match(
         
         return Pair(homeWins, awayWins)
     }
-    
-    /**
-     * Valida que los sets sean consistentes
-     */
+
     fun validateSets(): Boolean {
         if (homeSets.isEmpty() && awaySets.isEmpty()) return true
         if (homeSets.size != awaySets.size) return false

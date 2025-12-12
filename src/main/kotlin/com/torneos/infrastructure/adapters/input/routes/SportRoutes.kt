@@ -23,13 +23,11 @@ fun Route.sportRoutes() {
     val deleteSportUseCase by application.inject<DeleteSportUseCase>()
 
     route("/sports") {
-        //  Listar deportes
         get {
             val sports = getSportsUseCase.execute()
             call.respond(HttpStatusCode.OK, sports.map { it.toResponse() })
         }
 
-        //  Crear deporte
         authenticate("auth-jwt") {
             post {
                 val request = call.receive<CreateSportRequest>()
@@ -55,7 +53,6 @@ fun Route.sportRoutes() {
                 }
             }
 
-            //  ELIMINAR DEPORTE
             delete("/{id}") {
                 val idStr = call.parameters["id"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
 
@@ -65,7 +62,6 @@ fun Route.sportRoutes() {
                 } catch (e: NoSuchElementException) {
                     call.respond(HttpStatusCode.NotFound, mapOf("error" to "Deporte no encontrado"))
                 } catch (e: Exception) {
-                    // Posible error de llave foránea (si el deporte ya se usa en un torneo)
                     call.respond(HttpStatusCode.Conflict, mapOf("error" to "No se puede eliminar: El deporte está en uso"))
                 }
             }

@@ -27,7 +27,7 @@ object MatchesTable : Table("matches") {
     val scoreAway = integer("score_away").nullable()
     val winnerId = uuid("winner_id").references(TeamsTable.id, onDelete = ReferenceOption.SET_NULL).nullable()
     
-    val matchData = text("match_data").default("{}") // JSONB
+    val matchData = text("match_data").default("{}")
     val notes = text("notes").nullable()
     
     val startedAt = timestamp("started_at").nullable()
@@ -49,7 +49,7 @@ object MatchResultsTable : Table("match_results") {
     val eventTime = integer("event_time").nullable()
     val eventPeriod = varchar("event_period", 20).nullable()
     
-    val eventData = text("event_data").default("{}") // JSONB
+    val eventData = text("event_data").default("{}")
     val notes = text("notes").nullable()
     val createdAt = timestamp("created_at").defaultExpression(CurrentTimestamp())
 

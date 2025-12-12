@@ -18,7 +18,6 @@ fun Route.refereeRoutes() {
         
         authenticate("auth-jwt") {
             
-            // Obtener partidos asignados al árbitro autenticado
             get("/my-matches") {
                 val userId = UUID.fromString(
                     call.principal<JWTPrincipal>()?.payload?.getClaim("id")?.asString()

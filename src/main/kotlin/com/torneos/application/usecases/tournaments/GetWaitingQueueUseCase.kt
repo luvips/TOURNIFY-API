@@ -4,10 +4,7 @@ import com.torneos.domain.services.TournamentWaitingQueueService
 import com.torneos.domain.services.WaitingQueueEntry
 import java.util.UUID
 
-/**
- * Caso de uso para consultar la cola de espera de un torneo
- * Demuestra el uso de COLA (Queue) con operaciones de consulta
- */
+
 class GetWaitingQueueUseCase {
 
     data class WaitingQueueInfo(
@@ -46,16 +43,12 @@ class GetWaitingQueueUseCase {
         )
     }
 
-    /**
-     * Obtener solo el siguiente equipo en la cola (peek sin remover)
-     */
+
     fun getNext(tournamentId: UUID): WaitingQueueEntry? {
         return TournamentWaitingQueueService.peek(tournamentId)
     }
 
-    /**
-     * Verificar posición de un equipo específico en la cola
-     */
+
     fun getTeamPosition(tournamentId: UUID, teamId: UUID): Int {
         return TournamentWaitingQueueService.getPosition(tournamentId, teamId)
     }

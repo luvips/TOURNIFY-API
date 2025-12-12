@@ -12,7 +12,6 @@ import java.util.UUID
 
 class PostgresStandingRepository : StandingRepository {
 
-    // Mapper de Fila de BD a Modelo de Dominio
     private fun ResultRow.toGroupStanding() = GroupStanding(
         id = this[GroupStandingsTable.id],
         groupId = this[GroupStandingsTable.groupId],
@@ -29,7 +28,6 @@ class PostgresStandingRepository : StandingRepository {
         updatedAt = this[GroupStandingsTable.updatedAt]
     )
 
-    // Clase auxiliar interna para acumular estadísticas antes de guardar
     private data class TeamStats(
         var played: Int = 0,
         var won: Int = 0,
@@ -55,7 +53,6 @@ class PostgresStandingRepository : StandingRepository {
 
     override suspend fun updateStandings(groupId: UUID): Boolean = dbQuery {
         try {
-            // 1. Obtener partidos finalizados
             val matches = com.torneos.infrastructure.adapters.output.persistence.tables.MatchesTable.selectAll()
                 .where {
                     (com.torneos.infrastructure.adapters.output.persistence.tables.MatchesTable.groupId eq groupId) and
@@ -65,7 +62,6 @@ class PostgresStandingRepository : StandingRepository {
             data class Stats(var pts: Int = 0, var gf: Int = 0, var ga: Int = 0, var w: Int = 0, var d: Int = 0, var l: Int = 0, var p: Int = 0)
             val teamStats = mutableMapOf<UUID, Stats>()
 
-            // 3. Iterar partidos y sumar
             matches.forEach { row ->
                 val home = row[com.torneos.infrastructure.adapters.output.persistence.tables.MatchesTable.teamHomeId]
                 val away = row[com.torneos.infrastructure.adapters.output.persistence.tables.MatchesTable.teamAwayId]
@@ -88,7 +84,6 @@ class PostgresStandingRepository : StandingRepository {
                 }
             }
 
-            // 4. Borrar tabla actual e insertar nuevos valores
             GroupStandingsTable.deleteWhere { GroupStandingsTable.groupId eq groupId }
 
             teamStats.forEach { (tId, s) ->
